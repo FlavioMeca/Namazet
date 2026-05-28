@@ -1,0 +1,1184 @@
+<!DOCTYPE html>
+<html lang="sq">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Kohët e Namazit – Durrës</title>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;0,600;1,300;1,400&family=Cinzel:wght@400;500&family=EB+Garamond:ital,wght@0,400;0,500;1,400&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --fajr:    #0d1b2e;
+    --fajr2:   #1a3a5c;
+    --sunrise: #1a2a1a;
+    --sunrise2:#2d4a2d;
+    --dhuhr:   #1a2535;
+    --dhuhr2:  #2a3f55;
+    --asr:     #1e2a1a;
+    --asr2:    #2e4020;
+    --maghrib: #1a1520;
+    --maghrib2:#2e2040;
+    --isha:    #080c18;
+    --isha2:   #12183a;
+    --bg: #0d1b2e;
+    --bg2: #1a3a5c;
+    --accent: #c9a96e;
+    --text: #e8d5b0;
+    --text-dim: rgba(232,213,176,0.55);
+    --star: rgba(255,255,240,0.85);
+    --trans: 1.2s cubic-bezier(0.4,0,0.2,1);
+  }
+
+  * { margin:0; padding:0; box-sizing:border-box; }
+
+  html, body {
+    width:100%; min-height:100vh;
+    font-family:'EB Garamond', serif;
+    background: var(--bg);
+    color: var(--text);
+    overflow-x:hidden;
+    transition: background var(--trans);
+  }
+
+  /* ===== STAR CANVAS ===== */
+  #starCanvas {
+    position:fixed; inset:0;
+    pointer-events:none;
+    z-index:0;
+    opacity:0.85;
+  }
+
+  /* ===== GRADIENT BG ===== */
+  #bgGradient {
+    position:fixed; inset:0; z-index:0;
+    background: radial-gradient(ellipse at 30% 20%, var(--bg2) 0%, var(--bg) 70%);
+    transition: background var(--trans);
+  }
+
+  /* ===== MAIN LAYOUT ===== */
+  #mainView, #salatView {
+    position:relative; z-index:1;
+    min-height:100vh;
+  }
+  #salatView { display:none; }
+
+  /* ===== HEADER ===== */
+  header {
+    text-align:center;
+    padding: 52px 20px 28px;
+    position:relative;
+  }
+  .header-ornament {
+    font-size:1.05rem;
+    letter-spacing:0.28em;
+    color: var(--accent);
+    opacity:0.75;
+    font-family:'Cinzel', serif;
+    text-transform:uppercase;
+    margin-bottom:10px;
+    display:block;
+  }
+  h1 {
+    font-family:'Cormorant Garamond', serif;
+    font-size: clamp(2.4rem,6vw,4.2rem);
+    font-weight:300;
+    letter-spacing:0.12em;
+    color: var(--text);
+    line-height:1.1;
+  }
+  h1 span {
+    color: var(--accent);
+    font-style:italic;
+  }
+  .city-tag {
+    display:inline-block;
+    margin-top:10px;
+    font-size:0.85rem;
+    letter-spacing:0.22em;
+    color: var(--text-dim);
+    font-family:'Cinzel', serif;
+    text-transform:uppercase;
+  }
+  .header-line {
+    width:120px; height:1px;
+    background: linear-gradient(90deg, transparent, var(--accent), transparent);
+    margin: 22px auto 0;
+  }
+
+  /* ===== DATE DISPLAY ===== */
+  #dateDisplay {
+    text-align:center;
+    padding: 0 20px 10px;
+  }
+  #dateDisplay .greg {
+    font-size:1.1rem;
+    color: var(--text-dim);
+    letter-spacing:0.07em;
+  }
+  #dateDisplay .hijri {
+    font-size:0.9rem;
+    margin-top:4px;
+    color: var(--accent);
+    opacity:0.75;
+    letter-spacing:0.08em;
+    font-style:italic;
+  }
+
+  /* ===== SUNRISE STRIP ===== */
+  #sunriseStrip {
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    gap:18px;
+    margin: 16px auto 0;
+    padding: 13px 32px;
+    max-width:420px;
+    border:1px solid rgba(201,169,110,0.2);
+    border-radius:50px;
+    background: rgba(201,169,110,0.06);
+    backdrop-filter:blur(4px);
+    font-family:'Cinzel', serif;
+    font-size:0.82rem;
+    letter-spacing:0.14em;
+    color: var(--text-dim);
+  }
+  #sunriseStrip .sun-icon { font-size:1.1rem; color:var(--accent); }
+  #sunriseStrip strong { color: var(--accent); font-weight:500; }
+
+  /* ===== PRAYER CARDS ===== */
+  #prayerGrid {
+    display:flex;
+    flex-direction:column;
+    gap:14px;
+    max-width:620px;
+    margin: 36px auto 0;
+    padding: 0 22px;
+  }
+
+  .prayer-card {
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    padding: 20px 28px;
+    border-radius:16px;
+    border: 1px solid rgba(201,169,110,0.15);
+    background: rgba(255,255,255,0.042);
+    backdrop-filter: blur(10px);
+    cursor:pointer;
+    transition: all 0.35s ease;
+    position:relative;
+    overflow:hidden;
+  }
+  .prayer-card::before {
+    content:'';
+    position:absolute;
+    inset:0;
+    background: linear-gradient(135deg, rgba(201,169,110,0.08) 0%, transparent 60%);
+    opacity:0;
+    transition: opacity 0.35s;
+  }
+  .prayer-card:hover { 
+    border-color: rgba(201,169,110,0.4);
+    transform:translateY(-2px);
+    box-shadow: 0 12px 36px rgba(0,0,0,0.35);
+  }
+  .prayer-card:hover::before { opacity:1; }
+  .prayer-card.active-prayer {
+    border-color: rgba(201,169,110,0.55);
+    background: rgba(201,169,110,0.1);
+    box-shadow: 0 0 32px rgba(201,169,110,0.18);
+  }
+
+  .prayer-left { display:flex; flex-direction:column; gap:3px; }
+  .prayer-arabic {
+    font-family:'Cormorant Garamond', serif;
+    font-size:1.55rem;
+    font-weight:400;
+    color: var(--text);
+    letter-spacing:0.04em;
+    font-style:italic;
+  }
+  .prayer-alb {
+    font-size:0.72rem;
+    color: var(--text-dim);
+    letter-spacing:0.12em;
+    text-transform:uppercase;
+    font-family:'Cinzel', serif;
+    opacity:0.7;
+  }
+  .prayer-name-alb {
+    font-size:1rem;
+    color: var(--text);
+    letter-spacing:0.06em;
+    font-family:'Cormorant Garamond', serif;
+    font-weight:500;
+  }
+
+  .prayer-right { 
+    display:flex; 
+    flex-direction:column; 
+    align-items:flex-end;
+    gap:4px;
+  }
+  .prayer-time {
+    font-family:'Cinzel', serif;
+    font-size:1.9rem;
+    font-weight:500;
+    color: var(--accent);
+    letter-spacing:0.06em;
+  }
+  .prayer-hint {
+    font-size:0.72rem;
+    color: var(--text-dim);
+    letter-spacing:0.08em;
+    font-style:italic;
+  }
+
+  .active-badge {
+    display:none;
+    position:absolute;
+    top:10px; right:10px;
+    width:8px; height:8px;
+    border-radius:50%;
+    background: var(--accent);
+    box-shadow: 0 0 12px var(--accent);
+    animation: pulse 2s infinite;
+  }
+  .prayer-card.active-prayer .active-badge { display:block; }
+  @keyframes pulse {
+    0%,100%{ opacity:1; transform:scale(1); }
+    50%{ opacity:0.5; transform:scale(1.5); }
+  }
+
+  /* ===== QUOTE SECTION ===== */
+  #quoteSection {
+    max-width:620px;
+    margin: 50px auto 0;
+    padding: 0 22px 60px;
+    text-align:center;
+  }
+  .quote-divider {
+    width:80px; height:1px;
+    background: linear-gradient(90deg, transparent, var(--accent), transparent);
+    margin: 0 auto 28px;
+  }
+  #quoteText {
+    font-family:'Cormorant Garamond', serif;
+    font-size:1.35rem;
+    font-weight:300;
+    font-style:italic;
+    color: var(--text-dim);
+    line-height:1.8;
+    transition: opacity 0.7s;
+  }
+  #quoteSource {
+    margin-top:16px;
+    font-size:0.78rem;
+    letter-spacing:0.16em;
+    text-transform:uppercase;
+    color: var(--accent);
+    font-family:'Cinzel', serif;
+    opacity:0.65;
+  }
+
+  /* ===== SALAT DETAIL VIEW ===== */
+  #salatView {
+    padding: 0 22px 60px;
+  }
+  .back-btn {
+    display:inline-flex;
+    align-items:center;
+    gap:10px;
+    margin: 36px 0 0 0;
+    padding: 10px 22px;
+    border:1px solid rgba(201,169,110,0.25);
+    border-radius:50px;
+    background:transparent;
+    color: var(--text-dim);
+    font-family:'Cinzel', serif;
+    font-size:0.78rem;
+    letter-spacing:0.14em;
+    cursor:pointer;
+    transition: all 0.3s;
+    text-transform:uppercase;
+  }
+  .back-btn:hover { border-color:var(--accent); color:var(--accent); }
+
+  .salat-header {
+    text-align:center;
+    padding: 32px 0 28px;
+  }
+  .salat-arabic-title {
+    font-family:'Cormorant Garamond', serif;
+    font-size: clamp(2.2rem,7vw,4rem);
+    font-weight:300;
+    font-style:italic;
+    color: var(--accent);
+    letter-spacing:0.08em;
+  }
+  .salat-alb-title {
+    font-size:0.82rem;
+    letter-spacing:0.22em;
+    text-transform:uppercase;
+    color: var(--text-dim);
+    font-family:'Cinzel', serif;
+    margin-top:6px;
+  }
+  .salat-meta {
+    margin-top:16px;
+    font-size:0.88rem;
+    color: var(--text-dim);
+    font-style:italic;
+  }
+  .salat-meta strong { color:var(--accent); }
+
+  .salat-body {
+    max-width:680px;
+    margin:0 auto;
+  }
+
+  /* ===== RAKAT BLOCK ===== */
+  .rakat-block {
+    margin-bottom:36px;
+    border:1px solid rgba(201,169,110,0.12);
+    border-radius:16px;
+    overflow:hidden;
+    background: rgba(255,255,255,0.03);
+  }
+  .rakat-title {
+    padding:16px 24px;
+    background: rgba(201,169,110,0.08);
+    font-family:'Cinzel', serif;
+    font-size:0.8rem;
+    letter-spacing:0.18em;
+    text-transform:uppercase;
+    color: var(--accent);
+    border-bottom:1px solid rgba(201,169,110,0.1);
+  }
+  .rakat-steps { padding: 6px 0; }
+
+  .step {
+    padding: 18px 24px;
+    border-bottom:1px solid rgba(255,255,255,0.05);
+  }
+  .step:last-child { border-bottom:none; }
+
+  .step-label {
+    font-family:'Cinzel', serif;
+    font-size:0.72rem;
+    letter-spacing:0.18em;
+    text-transform:uppercase;
+    color: var(--text-dim);
+    margin-bottom:10px;
+    opacity:0.6;
+  }
+
+  .transliteration {
+    font-family:'Cormorant Garamond', serif;
+    font-size:1.22rem;
+    font-style:italic;
+    color: var(--text);
+    line-height:1.75;
+    margin-bottom:6px;
+  }
+  .translation {
+    font-size:0.82rem;
+    color: var(--text-dim);
+    opacity:0.6;
+    line-height:1.65;
+    font-style:italic;
+  }
+
+  .step-note {
+    font-size:0.8rem;
+    color: var(--text-dim);
+    font-style:italic;
+    opacity:0.55;
+    margin-top:8px;
+    padding-top:8px;
+    border-top:1px dashed rgba(201,169,110,0.12);
+  }
+
+  /* ===== CLOCK ===== */
+  #liveClock {
+    text-align:center;
+    margin:10px 0 0;
+  }
+  #liveClock time {
+    font-family:'Cinzel', serif;
+    font-size:1.05rem;
+    letter-spacing:0.2em;
+    color: var(--text-dim);
+  }
+
+  /* ===== SCROLL ===== */
+  ::-webkit-scrollbar { width:4px; }
+  ::-webkit-scrollbar-track { background:transparent; }
+  ::-webkit-scrollbar-thumb { background:rgba(201,169,110,0.25); border-radius:2px; }
+
+  /* ===== ANIMATIONS ===== */
+  @keyframes fadeUp {
+    from{ opacity:0; transform:translateY(22px); }
+    to{ opacity:1; transform:translateY(0); }
+  }
+  .prayer-card {
+    animation: fadeUp 0.55s ease both;
+  }
+  .prayer-card:nth-child(1){ animation-delay:0.05s; }
+  .prayer-card:nth-child(2){ animation-delay:0.12s; }
+  .prayer-card:nth-child(3){ animation-delay:0.19s; }
+  .prayer-card:nth-child(4){ animation-delay:0.26s; }
+  .prayer-card:nth-child(5){ animation-delay:0.33s; }
+</style>
+</head>
+<body>
+
+<canvas id="starCanvas"></canvas>
+<div id="bgGradient"></div>
+
+<!-- MAIN VIEW -->
+<div id="mainView">
+  <header>
+    <span class="header-ornament">✦ Kohët e Namazit ✦</span>
+    <h1>Namaz<span>et</span></h1>
+    <div class="city-tag">Durrës · Shqipëri</div>
+    <div id="liveClock"><time id="clockTime"></time></div>
+    <div class="header-line"></div>
+  </header>
+
+  <div id="dateDisplay">
+    <div class="greg" id="gregDate"></div>
+    <div class="hijri" id="hijriDate"></div>
+  </div>
+
+  <div id="sunriseStrip">
+    <span class="sun-icon">☀</span>
+    <span>Lindja e Diellit</span>
+    <strong id="sunriseTime">--:--</strong>
+  </div>
+
+  <div id="prayerGrid"></div>
+
+  <div id="quoteSection">
+    <div class="quote-divider"></div>
+    <div id="quoteText"></div>
+    <div id="quoteSource"></div>
+  </div>
+</div>
+
+<!-- SALAT DETAIL VIEW -->
+<div id="salatView">
+  <button class="back-btn" onclick="closeDetail()">← Kthehu</button>
+  <div class="salat-header">
+    <div class="salat-arabic-title" id="detailArabic"></div>
+    <div class="salat-alb-title" id="detailAlb"></div>
+    <div class="salat-meta" id="detailMeta"></div>
+  </div>
+  <div class="salat-body" id="detailBody"></div>
+</div>
+
+<script>
+// ============================================================
+//  CONFIGURATION: Durrës, Albania
+// ============================================================
+const LAT  = 41.3233;
+const LNG  = 19.4414;
+const TZ   = 2; // UTC+2 (CET), +3 in summer (CEST). We auto-detect below.
+
+// ============================================================
+//  QUOTES by Prophets of Allah
+// ============================================================
+const QUOTES = [
+  { text:"Thuaj: 'O njerëz, unë jam i Dërguar i Allahut ndaj jush të gjithëve.'", source:"Profeti Muhammed ﷺ" },
+  { text:"Nëse keni besim sa kokrra e sinapit, mund të thoni malit: 'Lëviz nga këtu atje!' dhe ai do të lëvizë.", source:"Profeti Isa (Jezusi) alayhis-selam" },
+  { text:"O Zoti im! Zgjeromi gjoksin tim, lehtësomi punën time dhe zgjidhe nyjen e gjuhës sime.", source:"Profeti Musa (Moisiu) alayhis-selam" },
+  { text:"Falenderimi i takon Allahut i Cili na fali mbi shumë nga krijesat e Tij.", source:"Profeti Davud (Davidi) alayhis-selam" },
+  { text:"O Zoti im! Më falë mua, prindërit e mi dhe çdo besimtar ditën kur do të dalë llogaria.", source:"Profeti Nuh (Nuhu) alayhis-selam" },
+  { text:"Zoti im, unë jam i varfër ndaj çdo të mire që Ti më dërgon.", source:"Profeti Musa alayhis-selam" },
+  { text:"Vërtet, Allahu është i Butë dhe i Mëshirshëm ndaj robërve të Tij.", source:"Profeti Muhammed ﷺ" },
+  { text:"Bëjani mirë prindërve tuaj, sepse mëshira e Allahut varet nga kënaqësia e tyre.", source:"Profeti Muhammed ﷺ" },
+  { text:"Kush shpëton një shpirt, është sikur të ketë shpëtuar gjithë njerëzimin.", source:"Profeti Ibrahim (Abrahami) alayhis-selam" },
+  { text:"O Zoti im! Bëmë falënderues ndaj dhuntive Tua dhe bëmë nga robërit e Tu të drejtë.", source:"Profeti Sulejman (Solomoni) alayhis-selam" },
+  { text:"Faluni, sepse namazi është drita e zemrës.", source:"Profeti Muhammed ﷺ" },
+  { text:"Kush beson në Allahun dhe Ditën e Fundit, le të flasë mirë ose le të heshtë.", source:"Profeti Muhammed ﷺ" },
+  { text:"Zjarri nuk mund të shuajë zjarrin. Vetëm dashuria dhe mëshira munden.", source:"Profeti Isa alayhis-selam" },
+  { text:"Zemra e besimtarit është shtëpia e Allahut.", source:"Profeti Ibrahim alayhis-selam" },
+  { text:"Çdo vepër e mirë fillon me bismilah.", source:"Profeti Muhammed ﷺ" },
+];
+
+// ============================================================
+//  PRAYER DATA: names, colors, descriptions
+// ============================================================
+const PRAYERS = [
+  {
+    id:'fajr', arabic:'Faxhr', alb:'Agimi',
+    desc:'Namazi i Agimit – 2 rekat',
+    hint:'Para lindjes së diellit',
+    bg:['#080f1a','#112240'],
+    rakats:2, fard:2, sunnah:2, sunnahBefore:true,
+  },
+  {
+    id:'dhuhr', arabic:'Dhuhr', alb:'Dreka',
+    desc:'Namazi i Drекës – 4 rekat farz',
+    hint:'Mesi i ditës',
+    bg:['#0d1e30','#1a3550'],
+    rakats:4, fard:4, sunnah:4, sunnahBefore:true,
+  },
+  {
+    id:'asr', arabic:'Asr', alb:'Ikindia',
+    desc:'Namazi i Ikindisë – 4 rekat farz',
+    hint:'Pasdite',
+    bg:['#0d1a0d','#1a3020'],
+    rakats:4, fard:4, sunnah:0,
+  },
+  {
+    id:'maghrib', arabic:'Maghrib', alb:'Akshami',
+    desc:'Namazi i Akshamit – 3 rekat farz',
+    hint:'Pas perëndimit të diellit',
+    bg:['#120d1a','#221230'],
+    rakats:3, fard:3, sunnah:2, sunnahBefore:false,
+  },
+  {
+    id:'isha', arabic:'Isha', alb:'Jacia',
+    desc:'Namazi i Jacisë – 4 rekat farz',
+    hint:'Nata',
+    bg:['#050810','#0a0f28'],
+    rakats:4, fard:4, sunnah:2, sunnahBefore:false,
+  },
+];
+
+// ============================================================
+//  ASTRONOMY: Prayer time calculation
+//  Method: Muslim World League (slightly adapted)
+//  Fajr: 18° below horizon, Isha: 17°
+// ============================================================
+
+function toRad(d){ return d * Math.PI / 180; }
+function toDeg(r){ return r * 180 / Math.PI; }
+function fixHour(h){ return h - 24 * Math.floor(h / 24); }
+function fixAngle(a){ return a - 360 * Math.floor(a / 360); }
+
+function sunPosition(jd) {
+  const D = jd - 2451545.0;
+  const g = fixAngle(357.529 + 0.98560028 * D);
+  const q = fixAngle(280.459 + 0.98564736 * D);
+  const L = fixAngle(q + 1.915 * Math.sin(toRad(g)) + 0.020 * Math.sin(toRad(2*g)));
+  const e = 23.439 - 0.00000036 * D;
+  const RA = toDeg(Math.atan2(Math.cos(toRad(e)) * Math.sin(toRad(L)), Math.cos(toRad(L)))) / 15;
+  const d  = toDeg(Math.asin(Math.sin(toRad(e)) * Math.sin(toRad(L))));
+  const EqT = q/15 - fixHour(RA);
+  return { d, EqT };
+}
+
+function julianDay(date){
+  const Y = date.getFullYear();
+  const M = date.getMonth() + 1;
+  const D = date.getDate();
+  if(M <= 2){ return julianDay(new Date(Y-1, 11, D)); }
+  return Math.floor(365.25*(Y+4716)) + Math.floor(30.6001*(M+1)) + D - 1524.5;
+}
+
+function computeTimes(date){
+  const TZoff = getTimezoneOffset(date);
+  const jd = julianDay(date) - LNG / 360;
+  const { d, EqT } = sunPosition(jd);
+
+  // Solar noon (Dhuhr)
+  const Dhuhr = 12 + TZoff - LNG/15 - EqT;
+
+  // Hour angle helper
+  function hourAngle(elev, dir){
+    const num = -Math.sin(toRad(elev)) - Math.sin(toRad(d))*Math.sin(toRad(LAT));
+    const den = Math.cos(toRad(d)) * Math.cos(toRad(LAT));
+    const ha  = toDeg(Math.acos(num/den)) / 15;
+    return dir === 'before' ? Dhuhr - ha : Dhuhr + ha;
+  }
+
+  // Asr shadow ratio (Shafi = 1, Hanafi = 2). We use Shafi (standard)
+  function asrAngle(shadow){
+    const ang = toDeg(Math.atan(1/(shadow + Math.tan(toRad(Math.abs(LAT - d))))));
+    return ang;
+  }
+
+  const Fajr   = hourAngle(18, 'before');
+  const Sunrise= hourAngle(0.833, 'before');
+  const Asr    = Dhuhr + toDeg(Math.acos(
+    (Math.sin(toRad(asrAngle(1))) - Math.sin(toRad(LAT))*Math.sin(toRad(d))) /
+    (Math.cos(toRad(LAT))*Math.cos(toRad(d)))
+  )) / 15;
+  const Maghrib= hourAngle(0.833, 'after');
+  const Isha   = hourAngle(17, 'after');
+
+  return {
+    fajr:   toHHMM(Fajr),
+    sunrise:toHHMM(Sunrise),
+    dhuhr:  toHHMM(Dhuhr + 0.0167), // tiny shift for Dhuhr start
+    asr:    toHHMM(Asr),
+    maghrib:toHHMM(Maghrib),
+    isha:   toHHMM(Isha),
+    fajrH:  Fajr,
+    sunriseH:Sunrise,
+    dhuhrH: Dhuhr,
+    asrH:   Asr,
+    maghribH:Maghrib,
+    ishaH:  Isha,
+  };
+}
+
+function getTimezoneOffset(date){
+  // Albania: UTC+1 (CET) in winter, UTC+2 (CEST) in summer
+  // DST starts last Sunday March, ends last Sunday October
+  const y = date.getFullYear();
+  const dstStart = lastSunday(y, 2, 2); // March, 2am
+  const dstEnd   = lastSunday(y, 9, 3); // October, 3am
+  if(date >= dstStart && date < dstEnd) return 2;
+  return 1;
+}
+
+function lastSunday(y, month, hour){
+  // Find last Sunday of given month
+  const d = new Date(y, month+1, 0); // last day of month
+  d.setDate(d.getDate() - d.getDay());
+  d.setHours(hour, 0, 0, 0);
+  return d;
+}
+
+function toHHMM(h){
+  h = fixHour(h);
+  const hh = Math.floor(h);
+  const mm = Math.round((h - hh) * 60);
+  const mmFix = mm === 60 ? 0 : mm;
+  const hhFix = mm === 60 ? hh + 1 : hh;
+  return `${String(hhFix%24).padStart(2,'0')}:${String(mmFix).padStart(2,'0')}`;
+}
+
+function timeToHour(hhmm){
+  const [h,m] = hhmm.split(':').map(Number);
+  return h + m/60;
+}
+
+// ============================================================
+//  HIJRI DATE (approximate)
+// ============================================================
+function toHijri(date){
+  const JD = Math.floor(julianDay(date));
+  const l = JD - 1948440 + 10632;
+  const n = Math.floor((l-1)/10631);
+  const l2 = l - 10631*n + 354;
+  const j = Math.floor((10985-l2)/5316) * Math.floor(50*l2/17719) +
+            Math.floor(l2/5670) * Math.floor(43*l2/15238);
+  const l3 = l2 - Math.floor((30-j)/15) * Math.floor(17719*j/50) -
+             Math.floor(j/16) * Math.floor(15238*j/43) + 29;
+  const m = Math.floor(24*l3/709);
+  const d = l3 - Math.floor(709*m/24);
+  const y = 30*n + j - 30;
+
+  const months = ['Muharrem','Safar','Rabi\'ul-Evvel','Rabi\'ul-Ahir',
+    'Xhumadel-Ula','Xhumadel-Uhra','Rexheb','Sha\'ban',
+    'Ramazan','Sheval','Dhul-Ka\'de','Dhul-Hixhxhe'];
+  return `${d} ${months[m-1]} ${y} H`;
+}
+
+// ============================================================
+//  ALBANIAN MONTHS
+// ============================================================
+const ALB_MONTHS = ['Janar','Shkurt','Mars','Prill','Maj','Qershor',
+  'Korrik','Gusht','Shtator','Tetor','Nëntor','Dhjetor'];
+const ALB_DAYS   = ['E Diel','E Hënë','E Martë','E Mërkurë','E Enjte','E Premte','E Shtunë'];
+
+// ============================================================
+//  STARS
+// ============================================================
+function initStars(){
+  const canvas = document.getElementById('starCanvas');
+  const ctx = canvas.getContext('2d');
+  let W, H, stars = [];
+
+  function resize(){
+    W = canvas.width  = window.innerWidth;
+    H = canvas.height = window.innerHeight;
+    stars = Array.from({length:90}, () => ({
+      x: Math.random()*W,
+      y: Math.random()*H,
+      r: Math.random()*1.1 + 0.2,
+      speed: Math.random()*0.0012 + 0.0004,
+      phase: Math.random()*Math.PI*2,
+    }));
+  }
+
+  function draw(t){
+    ctx.clearRect(0,0,W,H);
+    stars.forEach(s=>{
+      const a = 0.35 + 0.65*Math.pow(Math.sin(t*s.speed + s.phase), 10);
+      ctx.beginPath();
+      ctx.arc(s.x, s.y, s.r, 0, Math.PI*2);
+      ctx.fillStyle = `rgba(255,255,240,${a.toFixed(3)})`;
+      ctx.fill();
+    });
+    requestAnimationFrame(draw);
+  }
+
+  window.addEventListener('resize', resize);
+  resize();
+  requestAnimationFrame(draw);
+}
+
+// ============================================================
+//  BACKGROUND: change per prayer time
+// ============================================================
+const BG_THEMES = {
+  night_pre_fajr: { c1:'#04070f', c2:'#0a1020' },
+  fajr:           { c1:'#060e1c', c2:'#0d2240' },
+  sunrise:        { c1:'#0d1a0a', c2:'#1a3510' },
+  dhuhr:          { c1:'#0d1e2e', c2:'#183a55' },
+  asr:            { c1:'#0d1808', c2:'#1c3215' },
+  maghrib:        { c1:'#10081a', c2:'#1e1038' },
+  isha:           { c1:'#04060e', c2:'#0a0c22' },
+};
+
+function updateBackground(prayerTimes){
+  const now = new Date();
+  const h = now.getHours() + now.getMinutes()/60;
+  const fj = timeToHour(prayerTimes.fajr);
+  const sr = timeToHour(prayerTimes.sunrise);
+  const dh = timeToHour(prayerTimes.dhuhr);
+  const as = timeToHour(prayerTimes.asr);
+  const mg = timeToHour(prayerTimes.maghrib);
+  const is = timeToHour(prayerTimes.isha);
+
+  let theme;
+  if(h < fj)        theme = BG_THEMES.night_pre_fajr;
+  else if(h < sr)   theme = BG_THEMES.fajr;
+  else if(h < dh)   theme = BG_THEMES.sunrise;
+  else if(h < as)   theme = BG_THEMES.dhuhr;
+  else if(h < mg)   theme = BG_THEMES.asr;
+  else if(h < is)   theme = BG_THEMES.maghrib;
+  else              theme = BG_THEMES.isha;
+
+  const grad = document.getElementById('bgGradient');
+  grad.style.background = `radial-gradient(ellipse at 30% 20%, ${theme.c2} 0%, ${theme.c1} 70%)`;
+  document.body.style.background = theme.c1;
+}
+
+function getActivePrayer(prayerTimes){
+  const now = new Date();
+  const h = now.getHours() + now.getMinutes()/60;
+  const times = [
+    { id:'fajr',    t: timeToHour(prayerTimes.fajr) },
+    { id:'dhuhr',   t: timeToHour(prayerTimes.dhuhr) },
+    { id:'asr',     t: timeToHour(prayerTimes.asr) },
+    { id:'maghrib', t: timeToHour(prayerTimes.maghrib) },
+    { id:'isha',    t: timeToHour(prayerTimes.isha) },
+  ];
+  // find most recent passed prayer
+  let active = null;
+  for(const t of times){
+    if(h >= t.t) active = t.id;
+  }
+  return active;
+}
+
+// ============================================================
+//  RENDER MAIN VIEW
+// ============================================================
+function renderMain(){
+  const now   = new Date();
+  const times = computeTimes(now);
+
+  // Date display
+  document.getElementById('gregDate').textContent =
+    `${ALB_DAYS[now.getDay()]}, ${now.getDate()} ${ALB_MONTHS[now.getMonth()]} ${now.getFullYear()}`;
+  document.getElementById('hijriDate').textContent = toHijri(now);
+
+  // Sunrise
+  document.getElementById('sunriseTime').textContent = times.sunrise;
+
+  // Prayer cards
+  const grid = document.getElementById('prayerGrid');
+  grid.innerHTML = '';
+  const active = getActivePrayer(times);
+
+  PRAYERS.forEach(p => {
+    const t = times[p.id];
+    const card = document.createElement('div');
+    card.className = 'prayer-card' + (p.id === active ? ' active-prayer' : '');
+    card.innerHTML = `
+      <div class="active-badge"></div>
+      <div class="prayer-left">
+        <div class="prayer-arabic">${p.arabic}</div>
+        <div class="prayer-alb">${p.alb}</div>
+      </div>
+      <div class="prayer-right">
+        <div class="prayer-time">${t}</div>
+        <div class="prayer-hint">${p.hint}</div>
+      </div>
+    `;
+    card.addEventListener('click', ()=> openDetail(p, t));
+    grid.appendChild(card);
+  });
+
+  // Background
+  updateBackground(times);
+
+  // Quote
+  const q = QUOTES[Math.floor(Date.now()/30000) % QUOTES.length];
+  document.getElementById('quoteText').textContent = `"${q.text}"`;
+  document.getElementById('quoteSource').textContent = `— ${q.source}`;
+}
+
+// ============================================================
+//  LIVE CLOCK
+// ============================================================
+function updateClock(){
+  const now = new Date();
+  const hh  = String(now.getHours()).padStart(2,'0');
+  const mm  = String(now.getMinutes()).padStart(2,'0');
+  const ss  = String(now.getSeconds()).padStart(2,'0');
+  document.getElementById('clockTime').textContent = `${hh}:${mm}:${ss}`;
+}
+
+// ============================================================
+//  SALAT DETAIL DATA
+// ============================================================
+const SALAT_DETAILS = {
+  fajr: {
+    intro: `<p style="color:var(--text-dim);font-style:italic;margin-bottom:24px;line-height:1.9;">Namazi i Sabahut (Faxhrit) kryhet me 2 rekat sunnet (mu'akkade) para dhe 2 rekat farz. Ndiqni hapat më poshtë:</p>`,
+    blocks:[
+      {
+        title:'2 Rekat Sunnet Mu\'akkade (Para Farzit)',
+        steps: sunnetSteps(2),
+      },
+      {
+        title:'2 Rekat Farz',
+        steps: farzSteps(2, true),
+      },
+      {
+        title:'Pas Namazit – Dhikr dhe Dua',
+        steps: postSteps(),
+      }
+    ]
+  },
+  dhuhr: {
+    intro: `<p style="color:var(--text-dim);font-style:italic;margin-bottom:24px;line-height:1.9;">Namazi i Drекës kryhet me 4 rekat sunnet para, 4 rekat farz dhe 2 rekat sunnet pas farzit.</p>`,
+    blocks:[
+      { title:'4 Rekat Sunnet (Para Farzit)', steps: sunnetSteps(4) },
+      { title:'4 Rekat Farz', steps: farzSteps(4, true) },
+      { title:'2 Rekat Sunnet (Pas Farzit)', steps: sunnetSteps(2) },
+      { title:'Pas Namazit – Dhikr', steps: postSteps() },
+    ]
+  },
+  asr: {
+    intro: `<p style="color:var(--text-dim);font-style:italic;margin-bottom:24px;line-height:1.9;">Namazi i Ikindisë kryhet me 4 rekat farz. Nuk ka sunnet para tij (por mund të falesh nafile).</p>`,
+    blocks:[
+      { title:'4 Rekat Farz', steps: farzSteps(4, true) },
+      { title:'Pas Namazit – Dhikr', steps: postSteps() },
+    ]
+  },
+  maghrib: {
+    intro: `<p style="color:var(--text-dim);font-style:italic;margin-bottom:24px;line-height:1.9;">Namazi i Akshamit kryhet me 3 rekat farz dhe 2 rekat sunnet pas farzit.</p>`,
+    blocks:[
+      { title:'3 Rekat Farz', steps: farzSteps(3, true) },
+      { title:'2 Rekat Sunnet (Pas Farzit)', steps: sunnetSteps(2) },
+      { title:'Pas Namazit – Dhikr', steps: postSteps() },
+    ]
+  },
+  isha: {
+    intro: `<p style="color:var(--text-dim);font-style:italic;margin-bottom:24px;line-height:1.9;">Namazi i Jacisë kryhet me 4 rekat sunnet para, 4 rekat farz, 2 rekat sunnet pas dhe 3 rekat vitër (vazhib).</p>`,
+    blocks:[
+      { title:'4 Rekat Sunnet (Para Farzit)', steps: sunnetSteps(4) },
+      { title:'4 Rekat Farz', steps: farzSteps(4, true) },
+      { title:'2 Rekat Sunnet (Pas Farzit)', steps: sunnetSteps(2) },
+      { title:'3 Rekat Vitër (Vazhib)', steps: vitrSteps() },
+      { title:'Pas Namazit – Dhikr', steps: postSteps() },
+    ]
+  },
+};
+
+// ===== STEP GENERATORS =====
+
+function niyyahStep(name){
+  return {
+    label:'1. Nijja (Qëllimi)',
+    trans:'Nijet falem namazin e ... duke u kthyer nga kibla, vullnetarisht, për Allah.',
+    transl:'Bëj nijet me zemër për namazin që do të falësh, pa nevojë ta shqiptosh me gojë.',
+    note:'Nijja (qëllimi) bëhet me zemër. Mjafton ta mendosh se po fillon namazin.',
+  };
+}
+
+function tekbirStep(){
+  return {
+    label:'2. Tekbir i Fillit (Tahrimedja)',
+    trans:'Allahu Ekber',
+    transl:'Allahu është më i Madhi',
+    note:'Ngre duart deri te veshët (meshkujt), ose deri te supet (femrat), me shuplakat nga kibla.',
+  };
+}
+
+function senaStep(){
+  return {
+    label:'3. Sena (Duaja e Fillimit)',
+    trans:'Subhaneke Allahumme ve bihamdike ve tebarekesmuke ve teala xhedduke ve la ilahe gajruke',
+    transl:'O Allah, larg çdo mangutsie je Ti, dhe lavdia Ty i takon; i bekuar është emri Yt, i lartë është madhëria Jote, dhe nuk ka zot tjetër përveç Teje.',
+    note:'Lexohet vetëm në rekatin e parë të çdo namazi, me zë të ulët.',
+  };
+}
+
+function eudhStep(){
+  return {
+    label:'4. Eudhu',
+    trans:'Eudhu billahi mines shejtanir raxhim',
+    transl:'Kërkoj mbrojtjen e Allahut nga shejtani i mallkuar.',
+    note:'Lexohet me zë të ulët, vetëm në rekatin e parë.',
+  };
+}
+
+function bismilahStep(){
+  return {
+    label:'5. Bismilah dhe Fatiha',
+    trans:'Bismillahirrahmanirrahim | Elhamdu lillahi rabbil alemin. Errahmanirrahim. Maliki jewmiddin. Ijjake neabudu ve ijjake nestain. Ihdinessirate\'l-mustekim. Sirate\'llezine en\'amte alejhim, gajril magdubi alejhim veleddallin. Amin.',
+    transl:'Me emrin e Allahut, Gjithëmëshirshmit, Mëshirplotit. | Lavdi i takon Allahut, Zotit të botëve. Gjithëmëshirshmi, Mëshiriploti. Sunduesit të Ditës së Gjykimit. Vetëm Ty të adhurojmë dhe vetëm prej Teje ndihmë kërkojmë. Udhëzona në rrugën e drejtë. Në rrugën e atyre që Ti i ke begatuar, jo të atyre mbi të cilët ka rënë zemërimi Yt, as të atyre që kanë humbur.',
+    note:'Fatiha lexohet në çdo rekat. Pas saj lexohet një sure ose disa ajete.',
+  };
+}
+
+function sureStep(){
+  return {
+    label:'6. Surja pas Fatihës',
+    trans:'Bismillahirrahmanirrahim | Kul huvallahu ehad. Allahussamad. Lem jelid velem juled. Velem jekun lehu kufuven ehad.',
+    transl:'Me emrin e Allahut, Gjithëmëshirshmit, Mëshirplotit. | Thuaj: Ai është Allahu, Një. Allahu, i Pavarur (Absolut). Nuk ka lindur dhe nuk është i lindur. Dhe askush nuk i është i barabartë Atij.',
+    note:'Kjo është Surja Al-Ikhlas. Mund të lexohet çdo sure tjetër e memorizuar.',
+  };
+}
+
+function rukuStep(){
+  return {
+    label:'Ruku\'u',
+    trans:'Allahu Ekber [bjer në ruku] | Subhane rabbiyal-adhim (×3)',
+    transl:'Allahu është më i Madhi. | I patëmetë është Zoti im i Madhërishëm.',
+    note:'Kurrizin e mbajmë drejt, duart mbajmë te gjunjët, kokën drejtë me kurrizin.',
+  };
+}
+
+function kijamStep(){
+  return {
+    label:'Drejtim pas Ruku\'ut (Kijam)',
+    trans:'Semi\'allahu limen hamideh [duke u drejtuar] | Rabbena lekel hamd',
+    transl:'Allahu dëgjon atë që e falënderon. | O Zoti ynë, Ty Ty takon lavdia.',
+    note:'Qëndrojmë drejtë plotësisht para se të biem në sexhde.',
+  };
+}
+
+function sexhdeStep(){
+  return {
+    label:'Sexhdeja e Parë',
+    trans:'Allahu Ekber [bie në sexhde] | Subhane rabbiyal-ala (×3)',
+    transl:'Allahu është më i Madhi. | I patëmetë është Zoti im, i Lartësuari.',
+    note:'Balli, hunda, dy duart, dy gjunjët dhe dy majat e gishtave të këmbëve prekin tokën.',
+  };
+}
+
+function xhullusStep(){
+  return {
+    label:'Ndenjja mes dy Sexhdeve (Xhulus)',
+    trans:'Allahu Ekber [u ngrit] | Rabbigfirli (×1-3)',
+    transl:'Allahu është më i Madhi. | O Zoti im, më fal.',
+    note:'Ulemi me rehati mes dy sexhdeve para se të biem sërish.',
+  };
+}
+
+function sexhde2Step(){
+  return {
+    label:'Sexhdeja e Dytë',
+    trans:'Allahu Ekber [bie sërish] | Subhane rabbiyal-ala (×3)',
+    transl:'Allahu është më i Madhi. | I patëmetë është Zoti im, i Lartësuari.',
+    note:'Kjo përfundon rekatin e parë. Pastaj ngrihemi për rekatin e dytë.',
+  };
+}
+
+function teshehhudStep(last){
+  return {
+    label: last ? 'Teshehhudi Fundit + Salavat' : 'Teshehhu­di i Ndenjjes së Mes­me',
+    trans:'Et-tehijjatu lillahi ves-salavatu vet-tajjibatu. Es-selamu alejke ejjuhen-nebijju ve rahmetullahi ve berekatuh. Es-selamu alejna ve ala ibadillahis-salihin. Eshedu en la ilahe illallah ve eshedu enne Muhammedurrasulullah.' + (last ? '\nAllahumme salli ala Muhammed ve ala ali Muhammed kema sallejte ala Ibrahim ve ala ali Ibrahim inneke hamidun mexhid. Allahumme barik ala Muhammed ve ala ali Muhammed kema barekte ala Ibrahim ve ala ali Ibrahim inneke hamidun mexhid.' : ''),
+    transl:'Të gjitha nderimet, lutjet dhe punët e mira i takojnë Allahut. Paqja qoftë mbi ty, o Profet, mëshira e Allahut dhe beqimet e Tij. Paqja qoftë mbi ne dhe mbi të gjithë robërit e mirë të Allahut. Dëshmoj se nuk ka zot tjetër veçse Allahu, dhe dëshmoj se Muhammedi është i Dërguar i Allahut.' + (last ? '\nO Allah, dërgo salavat mbi Muhammedin dhe familjen e tij, ashtu siç dërgove mbi Ibrahimin dhe familjen e tij — me të vërtetë Ti je i Lavdishëm, i Madhërishëm. O Allah, bekoji Muhammedin dhe familjen e tij, ashtu siç bekove Ibrahimin — me të vërtetë Ti je i Lavdishëm, i Madhërishëm.' : ''),
+    note: last ? 'Lexohet vetëm në ndenjjen e fundit, para selamit.' : 'Lexohet në rekatin e dytë kur ka 3 ose 4 rekat.',
+  };
+}
+
+function selamStep(){
+  return {
+    label:'Selami (Mbyllja e Namazit)',
+    trans:'Es-Selamu Alejkum ve rahmetullah [djathtas] | Es-Selamu Alejkum ve rahmetullah [majtas]',
+    transl:'Paqja dhe mëshira e Allahut qofshin mbi ju [djathtas] | Paqja dhe mëshira e Allahut qofshin mbi ju [majtas]',
+    note:'Kthehemi së pari majtas pastaj djathtas duke shqiptuar selamin. Kjo mbyll namazin.',
+  };
+}
+
+function farzSteps(rakats, withReading){
+  const s = [];
+  s.push(niyyahStep());
+  s.push(tekbirStep());
+  s.push(senaStep());
+  s.push(eudhStep());
+  s.push(bismilahStep());
+  if(withReading) s.push(sureStep());
+  s.push(rukuStep());
+  s.push(kijamStep());
+  s.push(sexhdeStep());
+  s.push(xhullusStep());
+  s.push(sexhde2Step());
+  if(rakats >= 2){
+    s.push({ label:'Rekati i Dytë', trans:'Ngrihem, lexoj Fatihën + Sure', transl:'Çohem për rekatin e dytë pa bërë tekbir fillimi. Lexoj Bismilah, Fatihën dhe një Sure.', note:'' });
+    s.push(rukuStep());
+    s.push(kijamStep());
+    s.push(sexhdeStep());
+    s.push(xhullusStep());
+    s.push(sexhde2Step());
+    if(rakats === 2) s.push(teshehhudStep(true));
+  }
+  if(rakats >= 3){
+    s.push(teshehhudStep(false));
+    s.push({ label:'Rekati i Tretë', trans:'Ngrihem, lexoj vetëm Fatihën (pa Sure të veçantë)', transl:'Çohem për rekatin e tretë. Lexoj vetëm Fatihën.', note:'' });
+    s.push(rukuStep());
+    s.push(kijamStep());
+    s.push(sexhdeStep());
+    s.push(xhullusStep());
+    s.push(sexhde2Step());
+    if(rakats === 3) s.push(teshehhudStep(true));
+  }
+  if(rakats === 4){
+    s.push({ label:'Rekati i Katërt', trans:'Ngrihem, lexoj vetëm Fatihën', transl:'Çohem për rekatin e katërt. Lexoj vetëm Fatihën.', note:'' });
+    s.push(rukuStep());
+    s.push(kijamStep());
+    s.push(sexhdeStep());
+    s.push(xhullusStep());
+    s.push(sexhde2Step());
+    s.push(teshehhudStep(true));
+  }
+  s.push(selamStep());
+  return s;
+}
+
+function sunnetSteps(rakats){
+  return farzSteps(rakats, true);
+}
+
+function vitrSteps(){
+  const s = [];
+  s.push(niyyahStep());
+  s.push(tekbirStep());
+  s.push(senaStep());
+  s.push(eudhStep());
+  s.push(bismilahStep());
+  s.push(sureStep());
+  s.push(rukuStep()); s.push(kijamStep());
+  s.push(sexhdeStep()); s.push(xhullusStep()); s.push(sexhde2Step());
+  s.push({ label:'Rekati i Dytë', trans:'Ngrihem, Fatihë + Sure', transl:'', note:'' });
+  s.push(rukuStep()); s.push(kijamStep());
+  s.push(sexhdeStep()); s.push(xhullusStep()); s.push(sexhde2Step());
+  s.push(teshehhudStep(false));
+  s.push({ label:'Rekati i Tretë – Dua Kunut', trans:'Ngrihem, Fatihë + Sure | Allahu Ekber [tekbir kunut, ngre duart] | Allahumme inna nestainuke ve nestagfiruke ve nu\'minu bike ve netevekelu alejke ve nuthni alejkel hajre ve neshkuruke ve la nekfuruke ve nakhleue ve netruku mej jefxhuruke. Allahumme ijjake neabudu ve leke nusalli ve nexhsudu ve ilejke nes\'a ve nahfidu ve nerjua rahmeteke ve nekhsha adhabeke inne adhabeke bil-kuffari mulhik.',
+    transl:'O Allah, prej Teje ndihmë kërkojmë, Ty falje kërkojmë, në Ty besojmë, në Ty mbështetemi, Ty të lavdërojmë me të mirën, Ty falenderojmë, nuk mohojmë, dhe largohemi dhe braktisim atë që të kundërshton Ty. O Allah, vetëm Ty të adhurojmë, vetëm për Ty falemi dhe biem në sexhde, drejt Teje ecim me hap të shpejtë, shpresojmë mëshirën Tënde dhe frikësohet nga dënimi Yt — vërtet dënimi Yt ra mbi jobesimtarët.',
+    note:'Duaja e Kunutit lexohet në rekatin e tretë të vitrit, pas Fatihës dhe surës, para rukusë sipas Hanefive, ose pas rukusë sipas Shafiive.' });
+  s.push(rukuStep()); s.push(kijamStep());
+  s.push(sexhdeStep()); s.push(xhullusStep()); s.push(sexhde2Step());
+  s.push(teshehhudStep(true));
+  s.push(selamStep());
+  return s;
+}
+
+function postSteps(){
+  return [
+    {
+      label:'Istigfar pas Namazit',
+      trans:'Astagfirullah (×3) | Allahumme entes-selamu ve minkes-selamu tebarekte ja dhel-xhelali vel-ikram',
+      transl:'Kërkoj faljen e Allahut (×3) | O Allah, Ti je Paqja dhe prej Teje vjen paqja, i bekuar je Ti, o Zot i Madhërisë dhe Nderimit.',
+      note:'Lexohet pas çdo namazi sapo jepet selami.',
+    },
+    {
+      label:'Subhanallah, Elhamdu lillah, Allahu Ekber',
+      trans:'Subhanallah (×33) | Elhamdu lillah (×33) | Allahu Ekber (×33) | La ilahe illallahu vahdehu la sherike leh, lehul mulku ve lehul hamdu ve huve ala kulli shej\'in kadir',
+      transl:'I patëmetë është Allahu (×33) | Lavdi i takon Allahut (×33) | Allahu është më i Madhi (×33) | Nuk ka zot tjetër veçse Allahu, i Vetëm, pa shok. I Tij është sundimi dhe I Tij është lavdia, dhe Ai ka mundësi mbi çdo gjë.',
+      note:'Ky dhikr pas çdo namazi shpreh falënderim dhe madhërim të Allahut.',
+    },
+    {
+      label:'Ajetul Kursi',
+      trans:'Allahu la ilahe illa huvel-hajjul-kajjum. La te\'khudhuhu sinetun vela nevmun lehu ma fis-semavati ve ma fil-ard. Men dhell-ledhi jeshfeu indeh illa biidhnin. Ja\'lemu ma bejne ejdihim ve ma halfehum ve la juhitune bishej\'im-min ilmih illa bima sha\'e. Vesi\'a kursijjuhus-semavati vel-ard. Ve la jeuduhu hifdhuhuma ve huvel-alijjul-adhim.',
+      transl:'Allahu — nuk ka zot tjetër veçse Ai, i Gjalli, i Vetë­qëndruesshmi. Nuk e zë atë as dremitja as gjumi. E Tija është çfarë gjendet në qiej dhe çfarë gjendet në tokë. Kush mund të ndërmjetësojë tek Ai pa lejen e Tij? Ai di çfarë është para tyre dhe çfarë është pas tyre, dhe ata nuk mund të përfshijë asgjë nga dituria e Tij, veçse aq sa Ai do. Froni i Tij shtrihet mbi qiej dhe tokë; dhe Atij nuk i rëndon ruajtja e tyre. Ai është i Lartësuari, Madhërishmi.',
+      note:'Leximi i Ajetul-Kursit pas çdo namazi farz, i hap dyert e xhenetit.',
+    },
+  ];
+}
+
+// ============================================================
+//  OPEN/CLOSE DETAIL VIEW
+// ============================================================
+function openDetail(prayer, time){
+  const main = document.getElementById('mainView');
+  const det  = document.getElementById('salatView');
+
+  document.getElementById('detailArabic').textContent = prayer.arabic;
+  document.getElementById('detailAlb').textContent = prayer.alb.toUpperCase() + ' · ' + prayer.desc.toUpperCase();
+  document.getElementById('detailMeta').innerHTML = `Koha sot: <strong>${time}</strong>`;
+
+  const data  = SALAT_DETAILS[prayer.id];
+  const body  = document.getElementById('detailBody');
+  body.innerHTML = data.intro;
+
+  data.blocks.forEach(block => {
+    const div = document.createElement('div');
+    div.className = 'rakat-block';
+    div.innerHTML = `<div class="rakat-title">${block.title}</div><div class="rakat-steps">${
+      block.steps.map(st => `
+        <div class="step">
+          <div class="step-label">${st.label}</div>
+          <div class="transliteration">${st.trans.replace(/\|/g,'<br>').replace(/\n/g,'<br><br>')}</div>
+          ${st.transl ? `<div class="translation">${st.transl.replace(/\|/g,'<br>').replace(/\n/g,'<br><br>')}</div>` : ''}
+          ${st.note ? `<div class="step-note">${st.note}</div>` : ''}
+        </div>
+      `).join('')
+    }</div>`;
+    body.appendChild(div);
+  });
+
+  main.style.display = 'none';
+  det.style.display  = 'block';
+  window.scrollTo(0,0);
+}
+
+function closeDetail(){
+  document.getElementById('mainView').style.display = 'block';
+  document.getElementById('salatView').style.display = 'none';
+  window.scrollTo(0,0);
+}
+
+// ============================================================
+//  QUOTE ROTATION
+// ============================================================
+let quoteIdx = 0;
+function rotateQuote(){
+  quoteIdx = (quoteIdx + 1) % QUOTES.length;
+  const q = QUOTES[quoteIdx];
+  const el = document.getElementById('quoteText');
+  el.style.opacity = '0';
+  setTimeout(()=>{
+    el.textContent = `"${q.text}"`;
+    document.getElementById('quoteSource').textContent = `— ${q.source}`;
+    el.style.opacity = '1';
+  }, 700);
+}
+
+// ============================================================
+//  INIT
+// ============================================================
+document.addEventListener('DOMContentLoaded', ()=>{
+  initStars();
+  renderMain();
+  updateClock();
+  setInterval(updateClock, 1000);
+  setInterval(()=>{
+    renderMain();
+  }, 60000);
+  setInterval(rotateQuote, 14000);
+});
+</script>
+</body>
+</html>

@@ -1,0 +1,1488 @@
+<!DOCTYPE html>
+<html lang="sq">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Kohët e namazit – Durrës</title>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;0,600;1,300;1,400&family=Cinzel:wght@400;500&family=EB+Garamond:ital,wght@0,400;0,500;1,400&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --fajr:    #0d1b2e;
+    --fajr2:   #1a3a5c;
+    --sunrise: #1a2a1a;
+    --sunrise2:#2d4a2d;
+    --dhuhr:   #1a2535;
+    --dhuhr2:  --2a3f55;
+    --asr:     #1e2a1a;
+    --asr2:    #2e4020;
+    --maghrib: #1a1520;
+    --maghrib2:#2e2040;
+    --isha:    #080c18;
+    --isha2:   #12183a;
+    --bg: #0d1b2e;
+    --bg2: #1a3a5c;
+    --accent: #c9a96e;
+    --text: #e8d5b0;
+    --text-dim: rgba(232,213,176,0.55);
+    --star: rgba(255,255,240,0.85);
+    --trans: 1.2s cubic-bezier(0.4,0,0.2,1);
+  }
+
+  * { margin:0; padding:0; box-sizing:border-box; }
+
+  html, body {
+    width:100%; min-height:100vh;
+    font-family:'EB Garamond', serif;
+    background: var(--bg);
+    color: var(--text);
+    overflow-x:hidden;
+    transition: background var(--trans);
+  }
+
+  /* ===== GRADIENT BG ===== */
+  #bgGradient {
+    position:fixed; inset:0; 
+    z-index: 1; 
+    background: radial-gradient(ellipse at 30% 20%, var(--bg2) 0%, var(--bg) 70%);
+    transition: background var(--trans);
+  }
+
+  /* ===== STAR CANVAS ===== */
+  #starCanvas {
+    position:fixed; inset:0;
+    pointer-events:none;
+    z-index: 2; 
+    opacity: 1; 
+  }
+
+  /* ===== MAIN LAYOUT ===== */
+  #mainView, #salatView {
+    position:relative; 
+    z-index: 3; 
+    min-height:100vh;
+  }
+  #salatView { display:none; }
+
+  /* ===== HEADER ===== */
+  header {
+    text-align:center;
+    padding: 52px 20px 28px;
+    position:relative;
+  }
+  .header-ornament {
+    font-size:1.05rem;
+    letter-spacing:0.28em;
+    color: var(--accent);
+    opacity:0.75;
+    font-family:'Cinzel', serif;
+    text-transform:uppercase;
+    margin-bottom:10px;
+    display:block;
+  }
+  h1 {
+    font-family:'Cormorant Garamond', serif;
+    font-size: clamp(2.4rem,6vw,4.2rem);
+    font-weight:300;
+    letter-spacing:0.12em;
+    color: var(--text);
+    line-height:1.1;
+  }
+  h1 span {
+    color: var(--accent);
+    font-style:italic;
+  }
+  .city-tag {
+    display:inline-block;
+    margin-top:10px;
+    font-size:0.85rem;
+    letter-spacing:0.22em;
+    color: var(--text-dim);
+    font-family:'Cinzel', serif;
+    text-transform:uppercase;
+  }
+  .header-line {
+    width:120px; height:1px;
+    background: linear-gradient(90deg, transparent, var(--accent), transparent);
+    margin: 22px auto 0;
+  }
+
+  /* ===== DATE DISPLAY ===== */
+  #dateDisplay {
+    text-align:center;
+    padding: 0 20px 10px;
+  }
+  #dateDisplay .greg {
+    font-size:1.1rem;
+    color: var(--text-dim);
+    letter-spacing:0.07em;
+  }
+  #dateDisplay .hijri {
+    font-size:0.9rem;
+    margin-top:4px;
+    color: var(--accent);
+    opacity:0.75;
+    letter-spacing:0.08em;
+    font-style:italic;
+  }
+
+  /* ===== IMSAK & SUNRISE STRIPS ===== */
+  #imsakStrip, #sunriseStrip {
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    gap:18px;
+    margin: 16px auto 0;
+    padding: 13px 32px;
+    max-width:420px;
+    border:1px solid rgba(201,169,110,0.2);
+    border-radius:50px;
+    background: rgba(201,169,110,0.06);
+    backdrop-filter:blur(4px);
+    font-family:'Cinzel', serif;
+    font-size:0.82rem;
+    letter-spacing:0.14em;
+    color: var(--text-dim);
+  }
+  #imsakStrip .sun-icon, #sunriseStrip .sun-icon { font-size:1.1rem; color:var(--accent); }
+  #imsakStrip strong, #sunriseStrip strong { color: var(--accent); font-weight:500; }
+
+  /* ===== PRAYER CARDS ===== */
+  #prayerGrid {
+    display:flex;
+    flex-direction:column;
+    gap:14px;
+    max-width:620px;
+    margin: 36px auto 0;
+    padding: 0 22px;
+  }
+
+  .prayer-card {
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    padding: 20px 28px;
+    border-radius:16px;
+    border: 1px solid rgba(201,169,110,0.15);
+    background: rgba(255,255,255,0.042);
+    backdrop-filter: blur(10px);
+    cursor:pointer;
+    transition: all 0.35s ease;
+    position:relative;
+    overflow:hidden;
+  }
+  .prayer-card::before {
+    content:'';
+    position:absolute;
+    inset:0;
+    background: linear-gradient(135deg, rgba(201,169,110,0.08) 0%, transparent 60%);
+    opacity:0;
+    transition: opacity 0.35s;
+  }
+  .prayer-card:hover { 
+    border-color: rgba(201,169,110,0.4);
+    transform:translateY(-2px);
+    box-shadow: 0 12px 36px rgba(0,0,0,0.35);
+  }
+  .prayer-card:hover::before { opacity:1; }
+  .prayer-card.active-prayer {
+    border-color: rgba(201,169,110,0.55);
+    background: rgba(201,169,110,0.1);
+    box-shadow: 0 0 32px rgba(201,169,110,0.18);
+  }
+
+  .prayer-left { display:flex; flex-direction:column; gap:3px; }
+  .prayer-arabic {
+    font-family:'Cormorant Garamond', serif;
+    font-size:1.55rem;
+    font-weight:400;
+    color: var(--text);
+    letter-spacing:0.04em;
+    font-style:italic;
+  }
+  .prayer-alb {
+    font-size:0.72rem;
+    color: var(--text-dim);
+    letter-spacing:0.12em;
+    text-transform:uppercase;
+    font-family:'Cinzel', serif;
+    opacity:0.7;
+  }
+  .prayer-name-alb {
+    font-size:1rem;
+    color: var(--text);
+    letter-spacing:0.06em;
+    font-family:'Cormorant Garamond', serif;
+    font-weight:500;
+  }
+
+  .prayer-right { 
+    display:flex; 
+    flex-direction:column; 
+    align-items:flex-end;
+    gap:4px;
+  }
+  .prayer-time {
+    font-family:'Cinzel', serif;
+    font-size:1.9rem;
+    font-weight:500;
+    color: var(--accent);
+    letter-spacing:0.06em;
+  }
+  .prayer-hint {
+    font-size:0.72rem;
+    color: var(--text-dim);
+    letter-spacing:0.08em;
+    font-style:italic;
+  }
+
+  .active-badge {
+    display:none;
+    position:absolute;
+    top:10px; right:10px;
+    width:8px; height:8px;
+    border-radius:50%;
+    background: var(--accent);
+    box-shadow: 0 0 12px var(--accent);
+    animation: pulse 2s infinite;
+  }
+  .prayer-card.active-prayer .active-badge { display:block; }
+  @keyframes pulse {
+    0%,100%{ opacity:1; transform:scale(1); }
+    50%{ opacity:0.5; transform:scale(1.5); }
+  }
+
+  /* ===== QUOTE SECTION ===== */
+  #quoteSection {
+    max-width:620px;
+    margin: 50px auto 0;
+    padding: 0 22px 60px;
+    text-align:center;
+  }
+  .quote-divider {
+    width:80px; height:1px;
+    background: linear-gradient(90deg, transparent, var(--accent), transparent);
+    margin: 0 auto 28px;
+  }
+  #quoteText {
+    font-family:'Cormorant Garamond', serif;
+    font-size:1.35rem;
+    font-weight:300;
+    font-style:italic;
+    color: var(--text-dim);
+    line-height:1.8;
+    transition: opacity 0.7s;
+  }
+  #quoteSource {
+    margin-top:16px;
+    font-size:0.78rem;
+    letter-spacing:0.16em;
+    text-transform:uppercase;
+    color: var(--accent);
+    font-family:'Cinzel', serif;
+    opacity:0.65;
+  }
+
+  /* ===== SALAT DETAIL VIEW ===== */
+  #salatView {
+    padding: 0 22px 60px;
+  }
+  .back-btn {
+    display:inline-flex;
+    align-items:center;
+    gap:10px;
+    margin: 36px 0 0 0;
+    padding: 10px 22px;
+    border:1px solid rgba(201,169,110,0.25);
+    border-radius:50px;
+    background:transparent;
+    color: var(--text-dim);
+    font-family:'Cinzel', serif;
+    font-size:0.78rem;
+    letter-spacing:0.14em;
+    cursor:pointer;
+    transition: all 0.3s;
+    text-transform:uppercase;
+  }
+  .back-btn:hover { border-color:var(--accent); color:var(--accent); }
+
+  .salat-header {
+    text-align:center;
+    padding: 32px 0 28px;
+  }
+  .salat-arabic-title {
+    font-family:'Cormorant Garamond', serif;
+    font-size: clamp(2.2rem,7vw,4rem);
+    font-weight:300;
+    font-style:italic;
+    color: var(--accent);
+    letter-spacing:0.08em;
+  }
+  .salat-alb-title {
+    font-size:0.82rem;
+    letter-spacing:0.22em;
+    text-transform:uppercase;
+    color: var(--text-dim);
+    font-family:'Cinzel', serif;
+    margin-top:6px;
+  }
+  .salat-meta {
+    margin-top:16px;
+    font-size:0.88rem;
+    color: var(--text-dim);
+    font-style:italic;
+  }
+  .salat-meta strong { color:var(--accent); }
+
+  .salat-body {
+    max-width:680px;
+    margin:0 auto;
+  }
+
+  /* ===== RAKAT BLOCK ===== */
+  .rakat-block {
+    margin-bottom:36px;
+    border:1px solid rgba(201,169,110,0.12);
+    border-radius:16px;
+    overflow:hidden;
+    background: rgba(255,255,255,0.03);
+  }
+  .rakat-title {
+    padding:16px 24px;
+    background: rgba(201,169,110,0.08);
+    font-family:'Cinzel', serif;
+    font-size:0.8rem;
+    letter-spacing:0.18em;
+    text-transform:uppercase;
+    color: var(--accent);
+    border-bottom:1px solid rgba(201,169,110,0.1);
+  }
+  .rakat-steps { padding: 6px 0; }
+
+  .step {
+    padding: 18px 24px;
+    border-bottom:1px solid rgba(255,255,255,0.05);
+  }
+  .step:last-child { border-bottom:none; }
+
+  .step-label {
+    font-family:'Cinzel', serif;
+    font-size:0.72rem;
+    letter-spacing:0.18em;
+    text-transform:uppercase;
+    color: var(--text-dim);
+    margin-bottom:10px;
+    opacity:0.6;
+  }
+
+  .transliteration {
+    font-family:'Cormorant Garamond', serif;
+    font-size:1.22rem;
+    font-style:italic;
+    color: var(--text);
+    line-height:1.75;
+    margin-bottom:6px;
+  }
+  .translation {
+    font-size:0.82rem;
+    color: var(--text-dim);
+    opacity:0.6;
+    line-height:1.65;
+    font-style:italic;
+  }
+
+  .step-note {
+    font-size:0.8rem;
+    color: var(--text-dim);
+    font-style:italic;
+    opacity:0.55;
+    margin-top:8px;
+    padding-top:8px;
+    border-top:1px dashed rgba(201,169,110,0.12);
+  }
+
+  /* ===== CLOCK ===== */
+  #liveClock {
+    text-align:center;
+    margin:10px 0 0;
+  }
+  #liveClock time {
+    font-family:'Cinzel', serif;
+    font-size:1.05rem;
+    letter-spacing:0.2em;
+    color: var(--text-dim);
+  }
+
+  /* ===== SCROLL ===== */
+  ::-webkit-scrollbar { width:4px; }
+  ::-webkit-scrollbar-track { background:transparent; }
+  ::-webkit-scrollbar-thumb { background:rgba(201,169,110,0.25); border-radius:2px; }
+
+  /* ===== ANIMATIONS ===== */
+  @keyframes fadeUp {
+    from{ opacity:0; transform:translateY(22px); }
+    to{ opacity:1; transform:translateY(0); }
+  }
+  .prayer-card {
+    animation: fadeUp 0.55s ease both;
+  }
+  .prayer-card:nth-child(1){ animation-delay:0.05s; }
+  .prayer-card:nth-child(2){ animation-delay:0.12s; }
+  .prayer-card:nth-child(3){ animation-delay:0.19s; }
+  .prayer-card:nth-child(4){ animation-delay:0.26s; }
+  .prayer-card:nth-child(5){ animation-delay:0.33s; }
+</style>
+</head>
+<body>
+
+<div id="bgGradient"></div>
+<canvas id="starCanvas"></canvas>
+
+<div id="mainView">
+  <header>
+    <span class="header-ornament">✦ Kohët e namazit ✦</span>
+    <h1>Namaz<span>et</span></h1>
+    <div class="city-tag">Durrës · Shqipëri</div>
+    <div id="liveClock"><time id="clockTime"></time></div>
+    <div class="header-line"></div>
+  </header>
+
+  <div id="dateDisplay">
+    <div class="greg" id="gregDate"></div>
+    <div class="hijri" id="hijriDate"></div>
+  </div>
+
+  <div id="imsakStrip">
+    <span class="sun-icon">🌙</span>
+    <span>Agimi (Imsaku)</span>
+    <strong id="imsakTime">--:--</strong>
+  </div>
+
+  <div id="sunriseStrip">
+    <span class="sun-icon">☀</span>
+    <span>Lindja e diellit</span>
+    <strong id="sunriseTime">--:--</strong>
+  </div>
+
+  <div id="prayerGrid"></div>
+
+  <div id="quoteSection">
+    <div class="quote-divider"></div>
+    <div id="quoteText"></div>
+    <div id="quoteSource"></div>
+  </div>
+</div>
+
+<div id="salatView">
+  <button class="back-btn" onclick="closeDetail()">← Kthehu</button>
+  <div class="salat-header">
+    <div class="salat-arabic-title" id="detailArabic"></div>
+    <div class="salat-alb-title" id="detailAlb"></div>
+    <div class="salat-meta" id="detailMeta"></div>
+  </div>
+  <div class="salat-body" id="detailBody"></div>
+</div>
+
+<script>
+const LAT  = 41.3233;
+const LNG  = 19.4414;
+
+const QUOTES = [
+  // 1. Profeti Muhamedi ﷺ
+  { text: "Thuaj: 'O njerëz, unë jam i Dërguari i Allahut te ju të gjithë.'", source: "Profeti Muhamedi ﷺ" }, //[cite: 1]
+  { text: "Vërtet, Allahu është i butë dhe i mëshirshëm ndaj robërve të Tij.", source: "Profeti Muhamedi ﷺ" }, //[cite: 1]
+  { text: "Bëjuni mirë prindërve tuaj, sepse mëshira e Allahut varet nga kënaqësia e tyre.", source: "Profeti Muhamedi ﷺ" }, //[cite: 1]
+  { text: "Faluni, sepse namazi është drita e zemrës.", source: "Profeti Muhamedi ﷺ" }, //[cite: 1]
+  { text: "Kush beson në Allahun dhe Ditën e Fundit, le të flasë mirë ose le të heshtë.", source: "Profeti Muhamedi ﷺ" }, //[cite: 1]
+  { text: "Çdo vepër e mirë fillon me Bismilah.", source: "Profeti Muhamedi ﷺ" }, //[cite: 1]
+  { text: "Më i miri prej jush është ai që ka sjelljen më të mirë.", source: "Profeti Muhamedi ﷺ" },
+  { text: "Xheneti ndodhet nën këmbët e nënave.", source: "Profeti Muhamedi ﷺ" },
+  { text: "Besimtari nuk është ai që ngopet, ndërsa fqinji i tij mbetet i uritur.", source: "Profeti Muhamedi ﷺ" },
+  { text: "Allahu është i bukur dhe e do të bukurën.", source: "Profeti Muhamedi ﷺ" },
+
+  // 2. Profeti Isa (Jezusi) alejhis-selam
+  { text: "Nëse keni besim sa kokrra e sinapit, mund t'i thoni malit: 'Lëviz nga këtu atje!' dhe ai do të lëvizë.", source: "Profeti Isa (Jezusi) alejhis-selam" }, //[cite: 1]
+  { text: "Zjarri nuk mund ta shuajë zjarrin. Vetëm dashuria dhe mëshira munden.", source: "Profeti Isa (Jezusi) alejhis-selam" }, //[cite: 1]
+  { text: "Paqja qoftë mbi mua ditën kur kam lindur, ditën kur do të vdes dhe ditën kur do të ringjallem!", source: "Profeti Isa (Jezusi) alejhis-selam" },
+  { text: "Unë jam rob i Allahut. Ai më ka dhënë Librin dhe më ka bërë profet.", source: "Profeti Isa (Jezusi) alejhis-selam" },
+  { text: "O Zoti ynë! Zbritna një tryezë nga qielli, që të jetë festë për ne dhe mrekulli nga Ti!", source: "Profeti Isa (Jezusi) alejhis-selam" },
+  { text: "Bota është si një urë; kaloni mbi të, por mos ndërtoni shtëpi mbi të.", source: "Profeti Isa (Jezusi) alejhis-selam" },
+  { text: "Me të vërtetë, Allahu është Zoti im dhe Zoti juaj, andaj adhuroni vetëm Atë!", source: "Profeti Isa (Jezusi) alejhis-selam" },
+  { text: "Mos jini mbjellës të fjalëve të këqija, sepse çfarë mbillni do të korrni.", source: "Profeti Isa (Jezusi) alejhis-selam" },
+  { text: "Zemra nuk mund të shërbejë dy zotërinj: ose do ta duash Zotin e do të urresh dunjanë, ose anasjelltas.", source: "Profeti Isa (Jezusi) alejhis-selam" },
+  { text: "O Zot, nëse i dënon, ata janë robërit e Tu, e nëse i fal, me të vërtetë, Ti je i Plotfuqishmi dhe i Urti.", source: "Profeti Isa (Jezusi) alejhis-selam" },
+
+  // 3. Profeti Musa (Moisiu) alejhis-selam
+  { text: "O Zoti im! Ma zgjero gjoksin, ma lehtëso punën dhe zgjidhe nyjen e gjuhës sime.", source: "Profeti Musa (Moisiu) alejhis-selam" }, //[cite: 1]
+  { text: "Zoti im, unë jam nevojtar për çdo të mirë që Ti ma dërgon.", source: "Profeti Musa (Moisiu) alejhis-selam" }, //[cite: 1]
+  { text: "Vërtet, Zoti im është me mua, Ai do të më udhëzojë!", source: "Profeti Musa (Moisiu) alejhis-selam" },
+  { text: "Ndihmën kërkojeni prej Allahut dhe bëhuni të durueshëm!", source: "Profeti Musa (Moisiu) alejhis-selam" },
+  { text: "O Zoti im, më fal mua dhe vëllanë tim dhe na fut në mëshirën Tënde!", source: "Profeti Musa (Moisiu) alejhis-selam" },
+  { text: "Nëse bëheni mosmirënjohës ju dhe të gjithë ata që janë në tokë, ta dini se Allahu është i Vetëmjaftueshëm.", source: "Profeti Musa (Moisiu) alejhis-selam" },
+  { text: "O populli im! Kujtoni dhuntitë e Allahut ndaj jush.", source: "Profeti Musa (Moisiu) alejhis-selam" },
+  { text: "O Zoti im! Unë i bëra padrejtësi vetes sime, andaj më fal!", source: "Profeti Musa (Moisiu) alejhis-selam" },
+  { text: "Nëse i keni besuar Allahut, mbështetuni tek Ai, nëse jeni besimtarë të sinqertë.", source: "Profeti Musa (Moisiu) alejhis-selam" },
+  { text: "O Zoti ynë, na ruaj nga të qenit sprovë për njerëzit e padrejtë!", source: "Profeti Musa (Moisiu) alejhis-selam" },
+
+  // 4. Profeti Ibrahim (Abrahami) alejhis-selam
+  { text: "Kush shpëton një shpirt, është sikur të ketë shpëtuar gjithë njerëzimin.", source: "Profeti Ibrahim (Abrahami) alejhis-selam" }, //[cite: 1]
+  { text: "Zemra e besimtarit është shtëpia e Allahut.", source: "Profeti Ibrahim (Abrahami) alejhis-selam" }, //[cite: 1]
+  { text: "O Zoti ynë! Pranoje prej nesh, se Ti, me të vërtetë, dëgjon dhe di gjithçka!", source: "Profeti Ibrahim (Abrahami) alejhis-selam" },
+  { text: "Zoti im! Ma bëj këtë qytet të sigurt dhe më ruaj mua dhe fëmijët e mi nga adhurimi i idhujve!", source: "Profeti Ibrahim (Abrahami) alejhis-selam" },
+  { text: "Zoti im, më fal mua, prindërit e mi dhe besimtarët, Ditën kur do të jepet Llogaria!", source: "Profeti Ibrahim (Abrahami) alejhis-selam" },
+  { text: "O Zoti im! Më dhuro urtësi dhe më bashko me të mirët!", source: "Profeti Ibrahim (Abrahami) alejhis-selam" },
+  { text: "Ai që më ka krijuar, Ai më udhëzon; Ai më ushqen dhe më jep të pi.", source: "Profeti Ibrahim (Abrahami) alejhis-selam" },
+  { text: "Dhe kur të sëmurem, Ai më shëron.", source: "Profeti Ibrahim (Abrahami) alejhis-selam" },
+  { text: "O Zoti ynë! Te Ti mbështetemi, te Ti kthehemi dhe te Ti është kthimi i fundit.", source: "Profeti Ibrahim (Abrahami) alejhis-selam" },
+  { text: "Unë e kthej fytyrën time drejt Atij që ka krijuar qiejt dhe tokën, si besimtar i vërtetë.", source: "Profeti Ibrahim (Abrahami) alejhis-selam" },
+
+  // 5. Profeti Nuh (Nuhu) alejhis-selam
+  { text: "O Zoti im! Më fal mua, prindërit e mi dhe çdo besimtar ditën kur do të dalë llogaria.", source: "Profeti Nuh (Nuhu) alejhis-selam" }, //[cite: 1]
+  { text: "O populli im, adhuroni Allahun, ju nuk keni zot tjetër përveç Tij!", source: "Profeti Nuh (Nuhu) alejhis-selam" },
+  { text: "Kërkoni falje nga Zoti juaj, se Ai është vërtet Falës i Madh.", source: "Profeti Nuh (Nuhu) alejhis-selam" },
+  { text: "Zoti im! Unë e thirra popullin tim natën dhe ditën, por thirrja ime vetëm i largoi edhe më shumë.", source: "Profeti Nuh (Nuhu) alejhis-selam" },
+  { text: "Zoti im! Kërkoj mbrojtje te Ti që të mos të pyes për atë që nuk kam dijeni.", source: "Profeti Nuh (Nuhu) alejhis-selam" },
+  { text: "Vërtet, unë jam për ju një këshillues i besueshëm dhe ftoj në rrugën e drejtë.", source: "Profeti Nuh (Nuhu) alejhis-selam" },
+  { text: "Unë nuk kërkoj nga ju shpërblim për këtë; shpërblimi im është vetëm te Zoti i botëve.", source: "Profeti Nuh (Nuhu) alejhis-selam" },
+  { text: "Hipni në anije! Me emrin e Allahut qoftë lundrimi dhe ndalimi i saj!", source: "Profeti Nuh (Nuhu) alejhis-selam" },
+  { text: "Nuk ka shpëtimtar sot nga vendimi i Allahut, përveç atij që Ai e mëshiron!", source: "Profeti Nuh (Nuhu) alejhis-selam" },
+  { text: "Falja e Zotit sjell shiun e begatë dhe shton pasurinë e fëmijët tuaj.", source: "Profeti Nuh (Nuhu) alejhis-selam" },
+
+  // 6. Profeti Davud (Davidi) alejhis-selam
+  { text: "Falënderimi i takon Allahut, i cili na shpërbleu mbi shumë nga krijesat e Tij.", source: "Profeti Davud (Davidi) alejhis-selam" }, //[cite: 1]
+  { text: "O Zot, Ti je Krijuesi i qiejve dhe i tokës, Ty të takon gjithë lavdia.", source: "Profeti Davud (Davidi) alejhis-selam" },
+  { text: "Bëni vepra të mira në shenjë falënderimi, se pak nga robërit e mi janë falënderues.", source: "Profeti Davud (Davidi) alejhis-selam" },
+  { text: "O Zoti im, më jep fuqi të jem i drejtë në çdo vendim.", source: "Profeti Davud (Davidi) alejhis-selam" },
+  { text: "Lavdi Allahut që më dha forcë, urtësi dhe zë të ëmbël për ta lartësuar Atë.", source: "Profeti Davud (Davidi) alejhis-selam" },
+  { text: "Çdo mëngjes dhe mbrëmje, unë lartësoj Zotin tim së bashku me malet dhe shpendët.", source: "Profeti Davud (Davidi) alejhis-selam" },
+  { text: "Kush ndjek rrugën e drejtë, Zoti e mbron nga armiqtë e tij.", source: "Profeti Davud (Davidi) alejhis-selam" },
+  { text: "Pendimi e pastron shpirtin ashtu si uji pastron trupin.", source: "Profeti Davud (Davidi) alejhis-selam" },
+  { text: "Gjykimi i drejtë është drita që e mban botën në ekuilibër.", source: "Profeti Davud (Davidi) alejhis-selam" },
+  { text: "Mëshira e Allahut vjen pranë atyre që qajnë nga frika e Tij në thellësi të natës.", source: "Profeti Davud (Davidi) alejhis-selam" },
+
+  // 7. Profeti Sulejman (Solomoni) alejhis-selam
+  { text: "O Zoti im! Më bëj falënderues ndaj dhuntive të Tua dhe më bëj nga robërit e Tu të drejtë.", source: "Profeti Sulejman (Solomoni) alejhis-selam" }, //[cite: 1]
+  { text: "Kjo është nga mirësia e Zotit tim, për të më sprovuar nëse do të jem falënderues apo mosmirënjohës.", source: "Profeti Sulejman (Solomoni) alejhis-selam" },
+  { text: "Zoti im! Më fal mua dhe më dhuro një mbretëri që nuk do ta ketë askush pas meje, se Ti je Dhuruesi i Madh!", source: "Profeti Sulejman (Solomoni) alejhis-selam" },
+  { text: "Me emrin e Allahut, të Gjithëmëshirshmit, Mëshirëplotit.", source: "Profeti Sulejman (Solomoni) alejhis-selam" },
+  { text: "Pasuria dhe mbretëria janë një sprovë, vetëm drejtësia të shpëton nga humbja.", source: "Profeti Sulejman (Solomoni) alejhis-selam" },
+  { text: "Asnjë krijesë nuk fshihet nga dija dhe kontrolli i Allahut, madje as milingona më e vogël.", source: "Profeti Sulejman (Solomoni) alejhis-selam" },
+  { text: "Buzëqeshja para madhështisë së krijimit është formë falënderimi për Zotin.", source: "Profeti Sulejman (Solomoni) alejhis-selam" },
+  { text: "Urtësia është thesar më i vlefshëm se floriri dhe mbretëria.", source: "Profeti Sulejman (Solomoni) alejhis-selam" },
+  { text: "Pushteti i vërtetë nuk është mbi ushtritë, por mbi nefsin tënd.", source: "Profeti Sulejman (Solomoni) alejhis-selam" },
+  { text: "Kush nuk di të falënderojë Krijuesin për pak, nuk do ta falënderojë as për shumë.", source: "Profeti Sulejman (Solomoni) alejhis-selam" },
+
+  // 8. Profeti Jusuf (Jozefi) alejhis-selam
+  { text: "O Zoti im! Burgu është më i dashur për mua se ajo në të cilën më ftojnë ato.", source: "Profeti Jusuf (Jozefi) alejhis-selam" },
+  { text: "Krijues i qiejve dhe i tokës! Ti je Mbrojtësi im në këtë botë dhe në botën tjetër.", source: "Profeti Jusuf (Jozefi) alejhis-selam" },
+  { text: "Më merr shpirtin si mysliman dhe më bashko me të mirët!", source: "Profeti Jusuf (Jozefi) alejhis-selam" },
+  { text: "Askush nuk do t'ju qortojë sot! Allahu ju faltë! Ai është më i Mëshirshmi i mëshiruesve.", source: "Profeti Jusuf (Jozefi) alejhis-selam" },
+  { text: "Vërtet, kush ka frikë Allahun dhe është i durueshëm, Allahu nuk ia humb shpërblimin atij që bën mirë.", source: "Profeti Jusuf (Jozefi) alejhis-selam" },
+  { text: "Unë nuk e shfajësoj veten tim, sepse shpirti priret drejt së keqes, përveç atij që e mëshiron Zoti im.", source: "Profeti Jusuf (Jozefi) alejhis-selam" },
+  { text: "Zoti im, me të vërtetë, ma lehtëson rrugën, Ai është i Gjithëdijshëm dhe i Urtë.", source: "Profeti Jusuf (Jozefi) alejhis-selam" },
+  { text: "Allahu mbizotëron në punën e Tij, por shumica e njerëzve nuk e dinë.", source: "Profeti Jusuf (Jozefi) alejhis-selam" },
+  { text: "Sprova është shkolla ku besimtari mëson të bëhet i fuqishëm.", source: "Profeti Jusuf (Jozefi) alejhis-selam" },
+  { text: "Vetëm tek Allahu gjendet zbërthimi i çdo ëndrre dhe zgjidhja e çdo brenge.", source: "Profeti Jusuf (Jozefi) alejhis-selam" },
+
+  // 9. Profeti Ejjub (Jobi) alejhis-selam
+  { text: "O Zoti im! Vërtet, mua më ka goditur fatkeqësia e Ti je më i mëshirshmi i mëshiruesve!", source: "Profeti Ejjub (Jobi) alejhis-selam" },
+  { text: "Unë mbështetem vetëm te Zoti im, Ai është streha e të duruarve.", source: "Profeti Ejjub (Jobi) alejhis-selam" },
+  { text: "Sëmundja dhe sprova janë një mjet për të pastruar shpirtin nga mëkatet.", source: "Profeti Ejjub (Jobi) alejhis-selam" },
+  { text: "Lavdi Atij që jep dhe Atij që merr, ne jemi të Tij dhe te Ai do të kthehemi.", source: "Profeti Ejjub (Jobi) alejhis-selam" },
+  { text: "Nuk e humba kurrë shpresën në mëshirën e Allahut, sepse dëshpërimi është vetia e mosbesimtarëve.", source: "Profeti Ejjub (Jobi) alejhis-selam" },
+  { text: "Durimi është çelësi i çdo lehtësimi dhe shpërblimi.", source: "Profeti Ejjub (Jobi) alejhis-selam" },
+  { text: "Zoti im, pasuria dhe familja ishin dhuratat e Tua, dhurata e durimit është edhe më e madhe.", source: "Profeti Ejjub (Jobi) alejhis-selam" },
+  { text: "Vetëm kur je i dobët kupton plotësisht madhështinë dhe fuqinë e Zotit.", source: "Profeti Ejjub (Jobi) alejhis-selam" },
+  { text: "Nëse Zoti jep një vështirësi, Ai jep me të edhe fuqinë për ta përballuar atë.", source: "Profeti Ejjub (Jobi) alejhis-selam" },
+  { text: "Më i madhi nga njerëzit është ai që ruan besimin e tij kur gjithçka rreth tij shkatërrohet.", source: "Profeti Ejjub (Jobi) alejhis-selam" },
+
+  // 10. Profeti Adem (Adami) alejhis-selam
+  { text: "O Zoti ynë! Ne i bëmë padrejtësi vetvetes. Nëse Ti nuk na fal dhe nuk na mëshiron, me siguri do të jemi të humbur!", source: "Profeti Adem (Adami) alejhis-selam" },
+  { text: "Të gjithë njerëzit do të gabojnë, por më i miri nga gabimtarët është ai që pendohet.", source: "Profeti Adem (Adami) alejhis-selam" },
+  { text: "Mëkatova, por mëshira Jote është më e madhe se gabimi im.", source: "Profeti Adem (Adami) alejhis-selam" },
+  { text: "Ti, o Zot, krijove njeriun nga balta dhe i fryve shpirt nga Shpirti Yt, lavdia të takon vetëm Ty.", source: "Profeti Adem (Adami) alejhis-selam" },
+  { text: "Xheneti ishte dhuratë, por pendimi është rruga që të rikthen tek Ai.", source: "Profeti Adem (Adami) alejhis-selam" },
+  { text: "Zoti im! Mos më lër të bie në mashtrimet e Shejtanit, sepse ai është armik i hapur.", source: "Profeti Adem (Adami) alejhis-selam" },
+  { text: "Për çdo dituri që kam, ajo më është mësuar prej Zotit tim.", source: "Profeti Adem (Adami) alejhis-selam" },
+  { text: "Falja e Zotit është si shiu që ngjall një tokë të vdekur nga tharja.", source: "Profeti Adem (Adami) alejhis-selam" },
+  { text: "Mirësia më e madhe që më dha Allahu, ishte aftësia për të kërkuar falje.", source: "Profeti Adem (Adami) alejhis-selam" },
+  { text: "Gjëja e parë që ndjeva pas krijimit, ishte se jam i varur nga Krijuesi im.", source: "Profeti Adem (Adami) alejhis-selam" }
+];
+
+const PRAYERS = [
+  {
+    id:'fajr', arabic:'Fajr', alb:'Sabahu',
+    desc:'Namazi i agimit – 2 rekat',
+    hint:'Para lindjes së diellit',
+    bg:['#080f1a','#112240'],
+    rakats:2, fard:2, sunnah:2, sunnahBefore:true,
+  },
+  {
+    id:'dhuhr', arabic:'Dhuhr', alb:'Dreka',
+    desc:'Namazi i drekës – 4 rekat farz',
+    hint:'Mesi i ditës',
+    bg:['#0d1e30','#1a3550'],
+    rakats:4, fard:4, sunnah:4, sunnahBefore:true,
+  },
+  {
+    id:'asr', arabic:'Asr', alb:'Ikindia',
+    desc:'Namazi i ikindisë – 4 rekat farz',
+    hint:'Pasdite',
+    bg:['#0d1a0d','#1a3020'],
+    rakats:4, fard:4, sunnah:0,
+  },
+  {
+    id:'maghrib', arabic:'Maghrib', alb:'Akshami',
+    desc:'Namazi i akshamit – 3 rekat farz',
+    hint:'Pas perëndimit të diellit',
+    bg:['#120d1a','#221230'],
+    rakats:3, fard:3, sunnah:2, sunnahBefore:false,
+  },
+  {
+    id:'isha', arabic:'Isha', alb:'Jacia',
+    desc:'Namazi i jacisë – 4 rekat farz',
+    hint:'Nata',
+    bg:['#050810','#0a0f28'],
+    rakats:4, fard:4, sunnah:2, sunnahBefore:false,
+  },
+];
+
+function toRad(d){ return d * Math.PI / 180; }
+function toDeg(r){ return r * 180 / Math.PI; }
+function fixHour(h){ return h - 24 * Math.floor(h / 24); }
+function fixAngle(a){ return a - 360 * Math.floor(a / 360); }
+
+function sunPosition(jd) {
+  const D = jd - 2451545.0;
+  const g = fixAngle(357.529 + 0.98560028 * D);
+  const q = fixAngle(280.459 + 0.98564736 * D);
+  const L = fixAngle(q + 1.915 * Math.sin(toRad(g)) + 0.020 * Math.sin(toRad(2*g)));
+  const e = 23.439 - 0.00000036 * D;
+  const RA = toDeg(Math.atan2(Math.cos(toRad(e)) * Math.sin(toRad(L)), Math.cos(toRad(L)))) / 15;
+  const d  = toDeg(Math.asin(Math.sin(toRad(e)) * Math.sin(toRad(L))));
+  const EqT = q/15 - fixHour(RA);
+  return { d, EqT };
+}
+
+function julianDay(date){
+  const Y = date.getFullYear();
+  const M = date.getMonth() + 1;
+  const D = date.getDate();
+  if(M <= 2){ return julianDay(new Date(Y-1, 11, D)); }
+  return Math.floor(365.25*(Y+4716)) + Math.floor(30.6001*(M+1)) + D - 1524.5;
+}
+
+const KMSH_TIMES = {
+  1: {
+    1: {imsak:"05:29", sunrise:"07:02", dhuhr:"11:51", asr:"14:10", maghrib:"16:30", isha:"17:57"},
+    2: {imsak:"05:29", sunrise:"07:02", dhuhr:"11:52", asr:"14:10", maghrib:"16:31", isha:"17:58"},
+    3: {imsak:"05:30", sunrise:"07:02", dhuhr:"11:52", asr:"14:11", maghrib:"16:32", isha:"17:59"},
+    4: {imsak:"05:30", sunrise:"07:02", dhuhr:"11:52", asr:"14:12", maghrib:"16:33", isha:"18:00"},
+    5: {imsak:"05:30", sunrise:"07:02", dhuhr:"11:53", asr:"14:13", maghrib:"16:34", isha:"18:01"},
+    6: {imsak:"05:30", sunrise:"07:02", dhuhr:"11:53", asr:"14:14", maghrib:"16:35", isha:"18:01"},
+    7: {imsak:"05:30", sunrise:"07:02", dhuhr:"11:54", asr:"14:15", maghrib:"16:36", isha:"18:02"},
+    8: {imsak:"05:30", sunrise:"07:02", dhuhr:"11:54", asr:"14:16", maghrib:"16:37", isha:"18:03"},
+    9: {imsak:"05:30", sunrise:"07:01", dhuhr:"11:55", asr:"14:16", maghrib:"16:38", isha:"18:04"},
+    10: {imsak:"05:30", sunrise:"07:01", dhuhr:"11:55", asr:"14:17", maghrib:"16:39", isha:"18:05"},
+    11: {imsak:"05:30", sunrise:"07:01", dhuhr:"11:55", asr:"14:18", maghrib:"16:40", isha:"18:06"},
+    12: {imsak:"05:29", sunrise:"07:01", dhuhr:"11:56", asr:"14:19", maghrib:"16:41", isha:"18:07"},
+    13: {imsak:"05:29", sunrise:"07:00", dhuhr:"11:56", asr:"14:20", maghrib:"16:42", isha:"18:08"},
+    14: {imsak:"05:29", sunrise:"07:00", dhuhr:"11:57", asr:"14:21", maghrib:"16:43", isha:"18:09"},
+    15: {imsak:"05:29", sunrise:"07:00", dhuhr:"11:57", asr:"14:22", maghrib:"16:44", isha:"18:10"},
+    16: {imsak:"05:29", sunrise:"06:59", dhuhr:"11:57", asr:"14:23", maghrib:"16:46", isha:"18:11"},
+    17: {imsak:"05:28", sunrise:"06:59", dhuhr:"11:58", asr:"14:24", maghrib:"16:47", isha:"18:12"},
+    18: {imsak:"05:28", sunrise:"06:58", dhuhr:"11:58", asr:"14:25", maghrib:"16:48", isha:"18:13"},
+    19: {imsak:"05:27", sunrise:"06:58", dhuhr:"11:58", asr:"14:26", maghrib:"16:49", isha:"18:14"},
+    20: {imsak:"05:27", sunrise:"06:57", dhuhr:"11:59", asr:"14:27", maghrib:"16:50", isha:"18:15"},
+    21: {imsak:"05:27", sunrise:"06:56", dhuhr:"11:59", asr:"14:28", maghrib:"16:51", isha:"18:16"},
+    22: {imsak:"05:26", sunrise:"06:56", dhuhr:"11:59", asr:"14:29", maghrib:"16:53", isha:"18:17"},
+    23: {imsak:"05:26", sunrise:"06:55", dhuhr:"11:59", asr:"14:30", maghrib:"16:54", isha:"18:18"},
+    24: {imsak:"05:25", sunrise:"06:54", dhuhr:"12:00", asr:"14:32", maghrib:"16:55", isha:"18:19"},
+    25: {imsak:"05:25", sunrise:"06:54", dhuhr:"12:00", asr:"14:33", maghrib:"16:56", isha:"18:20"},
+    26: {imsak:"05:24", sunrise:"06:53", dhuhr:"12:00", asr:"14:34", maghrib:"16:57", isha:"18:21"},
+    27: {imsak:"05:23", sunrise:"06:52", dhuhr:"12:00", asr:"14:35", maghrib:"16:59", isha:"18:22"},
+    28: {imsak:"05:23", sunrise:"06:51", dhuhr:"12:01", asr:"14:36", maghrib:"17:00", isha:"18:23"},
+    29: {imsak:"05:22", sunrise:"06:50", dhuhr:"12:01", asr:"14:37", maghrib:"17:01", isha:"18:24"},
+    30: {imsak:"05:21", sunrise:"06:49", dhuhr:"12:01", asr:"14:38", maghrib:"17:02", isha:"18:25"},
+    31: {imsak:"05:20", sunrise:"06:48", dhuhr:"12:01", asr:"14:39", maghrib:"17:04", isha:"18:26"},
+  },
+  2: {
+    1: {imsak:"05:20", sunrise:"06:47", dhuhr:"12:01", asr:"14:40", maghrib:"17:05", isha:"18:27"},
+    2: {imsak:"05:19", sunrise:"06:46", dhuhr:"12:01", asr:"14:41", maghrib:"17:06", isha:"18:29"},
+    3: {imsak:"05:18", sunrise:"06:45", dhuhr:"12:01", asr:"14:42", maghrib:"17:08", isha:"18:30"},
+    4: {imsak:"05:17", sunrise:"06:44", dhuhr:"12:02", asr:"14:43", maghrib:"17:09", isha:"18:31"},
+    5: {imsak:"05:16", sunrise:"06:43", dhuhr:"12:02", asr:"14:44", maghrib:"17:10", isha:"18:32"},
+    6: {imsak:"05:15", sunrise:"06:42", dhuhr:"12:02", asr:"14:45", maghrib:"17:11", isha:"18:33"},
+    7: {imsak:"05:14", sunrise:"06:41", dhuhr:"12:02", asr:"14:46", maghrib:"17:13", isha:"18:34"},
+    8: {imsak:"05:13", sunrise:"06:40", dhuhr:"12:02", asr:"14:47", maghrib:"17:14", isha:"18:35"},
+    9: {imsak:"05:12", sunrise:"06:39", dhuhr:"12:02", asr:"14:48", maghrib:"17:15", isha:"18:36"},
+    10: {imsak:"05:11", sunrise:"06:37", dhuhr:"12:02", asr:"14:49", maghrib:"17:16", isha:"18:37"},
+    11: {imsak:"05:10", sunrise:"06:36", dhuhr:"12:02", asr:"14:50", maghrib:"17:18", isha:"18:39"},
+    12: {imsak:"05:09", sunrise:"06:35", dhuhr:"12:02", asr:"14:51", maghrib:"17:19", isha:"18:40"},
+    13: {imsak:"05:08", sunrise:"06:34", dhuhr:"12:02", asr:"14:52", maghrib:"17:20", isha:"18:41"},
+    14: {imsak:"05:06", sunrise:"06:32", dhuhr:"12:02", asr:"14:53", maghrib:"17:21", isha:"18:42"},
+    15: {imsak:"05:05", sunrise:"06:31", dhuhr:"12:02", asr:"14:54", maghrib:"17:23", isha:"18:43"},
+    16: {imsak:"05:04", sunrise:"06:30", dhuhr:"12:02", asr:"14:55", maghrib:"17:24", isha:"18:44"},
+    17: {imsak:"05:03", sunrise:"06:28", dhuhr:"12:02", asr:"14:56", maghrib:"17:25", isha:"18:45"},
+    18: {imsak:"05:02", sunrise:"06:27", dhuhr:"12:02", asr:"14:57", maghrib:"17:26", isha:"18:46"},
+    19: {imsak:"05:00", sunrise:"06:26", dhuhr:"12:02", asr:"14:58", maghrib:"17:27", isha:"18:48"},
+    20: {imsak:"04:59", sunrise:"06:24", dhuhr:"12:01", asr:"14:59", maghrib:"17:29", isha:"18:49"},
+    21: {imsak:"04:58", sunrise:"06:23", dhuhr:"12:01", asr:"15:00", maghrib:"17:30", isha:"18:50"},
+    22: {imsak:"04:56", sunrise:"06:21", dhuhr:"12:01", asr:"15:00", maghrib:"17:31", isha:"18:51"},
+    23: {imsak:"04:55", sunrise:"06:20", dhuhr:"12:01", asr:"15:01", maghrib:"17:32", isha:"18:52"},
+    24: {imsak:"04:53", sunrise:"06:18", dhuhr:"12:01", asr:"15:02", maghrib:"17:34", isha:"18:53"},
+    25: {imsak:"04:52", sunrise:"06:17", dhuhr:"12:01", asr:"15:03", maghrib:"17:35", isha:"18:54"},
+    26: {imsak:"04:51", sunrise:"06:15", dhuhr:"12:01", asr:"15:04", maghrib:"17:36", isha:"18:55"},
+    27: {imsak:"04:49", sunrise:"06:14", dhuhr:"12:00", asr:"15:05", maghrib:"17:37", isha:"18:57"},
+    28: {imsak:"04:48", sunrise:"06:12", dhuhr:"12:00", asr:"15:05", maghrib:"17:38", isha:"18:58"},
+  },
+  3: {
+    1: {imsak:"04:46", sunrise:"06:11", dhuhr:"12:00", asr:"15:06", maghrib:"17:39", isha:"18:59"},
+    2: {imsak:"04:44", sunrise:"06:09", dhuhr:"12:00", asr:"15:07", maghrib:"17:41", isha:"19:00"},
+    3: {imsak:"04:43", sunrise:"06:08", dhuhr:"12:00", asr:"15:08", maghrib:"17:42", isha:"19:01"},
+    4: {imsak:"04:41", sunrise:"06:06", dhuhr:"12:00", asr:"15:08", maghrib:"17:43", isha:"19:02"},
+    5: {imsak:"04:40", sunrise:"06:04", dhuhr:"11:59", asr:"15:09", maghrib:"17:44", isha:"19:03"},
+    6: {imsak:"04:38", sunrise:"06:03", dhuhr:"11:59", asr:"15:10", maghrib:"17:45", isha:"19:05"},
+    7: {imsak:"04:37", sunrise:"06:01", dhuhr:"11:59", asr:"15:11", maghrib:"17:46", isha:"19:06"},
+    8: {imsak:"04:35", sunrise:"06:00", dhuhr:"11:59", asr:"15:11", maghrib:"17:48", isha:"19:07"},
+    9: {imsak:"04:33", sunrise:"05:58", dhuhr:"11:58", asr:"15:12", maghrib:"17:49", isha:"19:08"},
+    10: {imsak:"04:32", sunrise:"05:56", dhuhr:"11:58", asr:"15:13", maghrib:"17:50", isha:"19:09"},
+    11: {imsak:"04:30", sunrise:"05:55", dhuhr:"11:58", asr:"15:13", maghrib:"17:51", isha:"19:10"},
+    12: {imsak:"04:28", sunrise:"05:53", dhuhr:"11:58", asr:"15:14", maghrib:"17:52", isha:"19:12"},
+    13: {imsak:"04:26", sunrise:"05:51", dhuhr:"11:57", asr:"15:15", maghrib:"17:53", isha:"19:13"},
+    14: {imsak:"04:25", sunrise:"05:50", dhuhr:"11:57", asr:"15:15", maghrib:"17:54", isha:"19:14"},
+    15: {imsak:"04:23", sunrise:"05:48", dhuhr:"11:57", asr:"15:16", maghrib:"17:55", isha:"19:15"},
+    16: {imsak:"04:21", sunrise:"05:46", dhuhr:"11:56", asr:"15:17", maghrib:"17:57", isha:"19:16"},
+    17: {imsak:"04:19", sunrise:"05:45", dhuhr:"11:56", asr:"15:17", maghrib:"17:58", isha:"19:17"},
+    18: {imsak:"04:18", sunrise:"05:43", dhuhr:"11:56", asr:"15:18", maghrib:"17:59", isha:"19:19"},
+    19: {imsak:"04:16", sunrise:"05:41", dhuhr:"11:56", asr:"15:18", maghrib:"18:00", isha:"19:20"},
+    20: {imsak:"04:14", sunrise:"05:40", dhuhr:"11:55", asr:"15:19", maghrib:"18:01", isha:"19:21"},
+    21: {imsak:"04:12", sunrise:"05:38", dhuhr:"11:55", asr:"15:19", maghrib:"18:02", isha:"19:22"},
+    22: {imsak:"04:10", sunrise:"05:36", dhuhr:"11:55", asr:"15:20", maghrib:"18:03", isha:"19:23"},
+    23: {imsak:"04:09", sunrise:"05:35", dhuhr:"11:54", asr:"15:21", maghrib:"18:04", isha:"19:25"},
+    24: {imsak:"04:07", sunrise:"05:33", dhuhr:"11:54", asr:"15:21", maghrib:"18:05", isha:"19:26"},
+    25: {imsak:"04:05", sunrise:"05:31", dhuhr:"11:54", asr:"15:22", maghrib:"18:06", isha:"19:27"},
+    26: {imsak:"04:03", sunrise:"05:30", dhuhr:"11:54", asr:"15:22", maghrib:"18:07", isha:"19:28"},
+    27: {imsak:"04:01", sunrise:"05:28", dhuhr:"11:53", asr:"15:23", maghrib:"18:09", isha:"19:30"},
+    28: {imsak:"03:59", sunrise:"05:26", dhuhr:"11:53", asr:"15:23", maghrib:"18:10", isha:"19:31"},
+    29: {imsak:"04:57", sunrise:"06:25", dhuhr:"12:53", asr:"16:24", maghrib:"19:11", isha:"20:32"},
+    30: {imsak:"04:55", sunrise:"06:23", dhuhr:"12:52", asr:"16:24", maghrib:"19:12", isha:"20:33"},
+    31: {imsak:"04:54", sunrise:"06:21", dhuhr:"12:52", asr:"16:24", maghrib:"19:13", isha:"20:35"},
+  },
+  4: {
+    1: {imsak:"04:52", sunrise:"06:20", dhuhr:"12:52", asr:"16:25", maghrib:"19:14", isha:"20:36"},
+    2: {imsak:"04:50", sunrise:"06:18", dhuhr:"12:51", asr:"16:25", maghrib:"19:15", isha:"20:37"},
+    3: {imsak:"04:48", sunrise:"06:16", dhuhr:"12:51", asr:"16:26", maghrib:"19:16", isha:"20:39"},
+    4: {imsak:"04:46", sunrise:"06:15", dhuhr:"12:51", asr:"16:26", maghrib:"19:17", isha:"20:40"},
+    5: {imsak:"04:44", sunrise:"06:13", dhuhr:"12:51", asr:"16:27", maghrib:"19:18", isha:"20:41"},
+    6: {imsak:"04:42", sunrise:"06:11", dhuhr:"12:50", asr:"16:27", maghrib:"19:19", isha:"20:43"},
+    7: {imsak:"04:40", sunrise:"06:10", dhuhr:"12:50", asr:"16:27", maghrib:"19:20", isha:"20:44"},
+    8: {imsak:"04:38", sunrise:"06:08", dhuhr:"12:50", asr:"16:28", maghrib:"19:21", isha:"20:45"},
+    9: {imsak:"04:36", sunrise:"06:06", dhuhr:"12:49", asr:"16:28", maghrib:"19:23", isha:"20:47"},
+    10: {imsak:"04:34", sunrise:"06:05", dhuhr:"12:49", asr:"16:29", maghrib:"19:24", isha:"20:48"},
+    11: {imsak:"04:32", sunrise:"06:03", dhuhr:"12:49", asr:"16:29", maghrib:"19:25", isha:"20:49"},
+    12: {imsak:"04:30", sunrise:"06:01", dhuhr:"12:49", asr:"16:29", maghrib:"19:26", isha:"20:51"},
+    13: {imsak:"04:28", sunrise:"06:00", dhuhr:"12:48", asr:"16:30", maghrib:"19:27", isha:"20:52"},
+    14: {imsak:"04:26", sunrise:"05:58", dhuhr:"12:48", asr:"16:30", maghrib:"19:28", isha:"20:54"},
+    15: {imsak:"04:24", sunrise:"05:57", dhuhr:"12:48", asr:"16:30", maghrib:"19:29", isha:"20:55"},
+    16: {imsak:"04:23", sunrise:"05:55", dhuhr:"12:48", asr:"16:31", maghrib:"19:30", isha:"20:56"},
+    17: {imsak:"04:21", sunrise:"05:54", dhuhr:"12:47", asr:"16:31", maghrib:"19:31", isha:"20:58"},
+    18: {imsak:"04:19", sunrise:"05:52", dhuhr:"12:47", asr:"16:32", maghrib:"19:32", isha:"20:59"},
+    19: {imsak:"04:17", sunrise:"05:51", dhuhr:"12:47", asr:"16:32", maghrib:"19:33", isha:"21:01"},
+    20: {imsak:"04:15", sunrise:"05:49", dhuhr:"12:47", asr:"16:32", maghrib:"19:34", isha:"21:02"},
+    21: {imsak:"04:13", sunrise:"05:48", dhuhr:"12:47", asr:"16:33", maghrib:"19:35", isha:"21:04"},
+    22: {imsak:"04:11", sunrise:"05:46", dhuhr:"12:46", asr:"16:33", maghrib:"19:37", isha:"21:05"},
+    23: {imsak:"04:09", sunrise:"05:45", dhuhr:"12:46", asr:"16:33", maghrib:"19:38", isha:"21:07"},
+    24: {imsak:"04:07", sunrise:"05:43", dhuhr:"12:46", asr:"16:33", maghrib:"19:39", isha:"21:08"},
+    25: {imsak:"04:05", sunrise:"05:42", dhuhr:"12:46", asr:"16:34", maghrib:"19:40", isha:"21:10"},
+    26: {imsak:"04:03", sunrise:"05:40", dhuhr:"12:46", asr:"16:34", maghrib:"19:41", isha:"21:11"},
+    27: {imsak:"04:01", sunrise:"05:39", dhuhr:"12:45", asr:"16:34", maghrib:"19:42", isha:"21:13"},
+    28: {imsak:"04:00", sunrise:"05:38", dhuhr:"12:45", asr:"16:35", maghrib:"19:43", isha:"21:14"},
+    29: {imsak:"03:58", sunrise:"05:36", dhuhr:"12:45", asr:"16:35", maghrib:"19:44", isha:"21:16"},
+    30: {imsak:"03:56", sunrise:"05:35", dhuhr:"12:45", asr:"16:35", maghrib:"19:45", isha:"21:17"},
+  },
+  5: {
+    1: {imsak:"03:54", sunrise:"05:34", dhuhr:"12:45", asr:"16:36", maghrib:"19:46", isha:"21:19"},
+    2: {imsak:"03:52", sunrise:"05:32", dhuhr:"12:45", asr:"16:36", maghrib:"19:47", isha:"21:20"},
+    3: {imsak:"03:50", sunrise:"05:31", dhuhr:"12:45", asr:"16:36", maghrib:"19:48", isha:"21:22"},
+    4: {imsak:"03:49", sunrise:"05:30", dhuhr:"12:45", asr:"16:37", maghrib:"19:49", isha:"21:23"},
+    5: {imsak:"03:47", sunrise:"05:28", dhuhr:"12:44", asr:"16:37", maghrib:"19:50", isha:"21:25"},
+    6: {imsak:"03:45", sunrise:"05:27", dhuhr:"12:44", asr:"16:37", maghrib:"19:52", isha:"21:27"},
+    7: {imsak:"03:43", sunrise:"05:26", dhuhr:"12:44", asr:"16:37", maghrib:"19:53", isha:"21:28"},
+    8: {imsak:"03:42", sunrise:"05:25", dhuhr:"12:44", asr:"16:38", maghrib:"19:54", isha:"21:30"},
+    9: {imsak:"03:40", sunrise:"05:24", dhuhr:"12:44", asr:"16:38", maghrib:"19:55", isha:"21:31"},
+    10: {imsak:"03:38", sunrise:"05:23", dhuhr:"12:44", asr:"16:38", maghrib:"19:56", isha:"21:33"},
+    11: {imsak:"03:36", sunrise:"05:21", dhuhr:"12:44", asr:"16:39", maghrib:"19:57", isha:"21:34"},
+    12: {imsak:"03:35", sunrise:"05:20", dhuhr:"12:44", asr:"16:39", maghrib:"19:58", isha:"21:36"},
+    13: {imsak:"03:33", sunrise:"05:19", dhuhr:"12:44", asr:"16:39", maghrib:"19:59", isha:"21:37"},
+    14: {imsak:"03:32", sunrise:"05:18", dhuhr:"12:44", asr:"16:39", maghrib:"20:00", isha:"21:39"},
+    15: {imsak:"03:30", sunrise:"05:17", dhuhr:"12:44", asr:"16:40", maghrib:"20:01", isha:"21:40"},
+    16: {imsak:"03:28", sunrise:"05:16", dhuhr:"12:44", asr:"16:40", maghrib:"20:02", isha:"21:42"},
+    17: {imsak:"03:27", sunrise:"05:15", dhuhr:"12:44", asr:"16:40", maghrib:"20:03", isha:"21:43"},
+    18: {imsak:"03:25", sunrise:"05:15", dhuhr:"12:44", asr:"16:41", maghrib:"20:04", isha:"21:45"},
+    19: {imsak:"03:24", sunrise:"05:14", dhuhr:"12:44", asr:"16:41", maghrib:"20:05", isha:"21:46"},
+    20: {imsak:"03:22", sunrise:"05:13", dhuhr:"12:44", asr:"16:41", maghrib:"20:06", isha:"21:48"},
+    21: {imsak:"03:21", sunrise:"05:12", dhuhr:"12:44", asr:"16:42", maghrib:"20:07", isha:"21:49"},
+    22: {imsak:"03:20", sunrise:"05:11", dhuhr:"12:44", asr:"16:42", maghrib:"20:08", isha:"21:51"},
+    23: {imsak:"03:18", sunrise:"05:10", dhuhr:"12:44", asr:"16:42", maghrib:"20:08", isha:"21:52"},
+    24: {imsak:"03:17", sunrise:"05:10", dhuhr:"12:45", asr:"16:42", maghrib:"20:09", isha:"21:54"},
+    25: {imsak:"03:16", sunrise:"05:09", dhuhr:"12:45", asr:"16:43", maghrib:"20:10", isha:"21:55"},
+    26: {imsak:"03:15", sunrise:"05:08", dhuhr:"12:45", asr:"16:43", maghrib:"20:11", isha:"21:56"},
+    27: {imsak:"03:13", sunrise:"05:08", dhuhr:"12:45", asr:"16:43", maghrib:"20:12", isha:"21:58"},
+    28: {imsak:"03:12", sunrise:"05:07", dhuhr:"12:45", asr:"16:43", maghrib:"20:13", isha:"21:59"},
+    29: {imsak:"03:11", sunrise:"05:06", dhuhr:"12:45", asr:"16:44", maghrib:"20:14", isha:"22:00"},
+    30: {imsak:"03:10", sunrise:"05:06", dhuhr:"12:45", asr:"16:44", maghrib:"20:14", isha:"22:02"},
+    31: {imsak:"03:09", sunrise:"05:05", dhuhr:"12:45", asr:"16:44", maghrib:"20:15", isha:"22:03"},
+  },
+  6: {
+    1: {imsak:"03:08", sunrise:"05:05", dhuhr:"12:46", asr:"16:45", maghrib:"20:16", isha:"22:04"},
+    2: {imsak:"03:07", sunrise:"05:05", dhuhr:"12:46", asr:"16:45", maghrib:"20:17", isha:"22:05"},
+    3: {imsak:"03:06", sunrise:"05:04", dhuhr:"12:46", asr:"16:45", maghrib:"20:18", isha:"22:06"},
+    4: {imsak:"03:05", sunrise:"05:04", dhuhr:"12:46", asr:"16:46", maghrib:"20:18", isha:"22:07"},
+    5: {imsak:"03:05", sunrise:"05:03", dhuhr:"12:46", asr:"16:46", maghrib:"20:19", isha:"22:09"},
+    6: {imsak:"03:04", sunrise:"05:03", dhuhr:"12:46", asr:"16:46", maghrib:"20:20", isha:"22:10"},
+    7: {imsak:"03:03", sunrise:"05:03", dhuhr:"12:47", asr:"16:46", maghrib:"20:20", isha:"22:11"},
+    8: {imsak:"03:03", sunrise:"05:03", dhuhr:"12:47", asr:"16:47", maghrib:"20:21", isha:"22:11"},
+    9: {imsak:"03:02", sunrise:"05:02", dhuhr:"12:47", asr:"16:47", maghrib:"20:21", isha:"22:12"},
+    10: {imsak:"03:02", sunrise:"05:02", dhuhr:"12:47", asr:"16:47", maghrib:"20:22", isha:"22:13"},
+    11: {imsak:"03:01", sunrise:"05:02", dhuhr:"12:47", asr:"16:48", maghrib:"20:23", isha:"22:14"},
+    12: {imsak:"03:01", sunrise:"05:02", dhuhr:"12:48", asr:"16:48", maghrib:"20:23", isha:"22:15"},
+    13: {imsak:"03:00", sunrise:"05:02", dhuhr:"12:48", asr:"16:48", maghrib:"20:24", isha:"22:15"},
+    14: {imsak:"03:00", sunrise:"05:02", dhuhr:"12:48", asr:"16:48", maghrib:"20:24", isha:"22:16"},
+    15: {imsak:"03:00", sunrise:"05:02", dhuhr:"12:48", asr:"16:49", maghrib:"20:24", isha:"22:17"},
+    16: {imsak:"03:00", sunrise:"05:02", dhuhr:"12:48", asr:"16:49", maghrib:"20:25", isha:"22:17"},
+    17: {imsak:"03:00", sunrise:"05:02", dhuhr:"12:49", asr:"16:49", maghrib:"20:25", isha:"22:18"},
+    18: {imsak:"03:00", sunrise:"05:02", dhuhr:"12:49", asr:"16:49", maghrib:"20:26", isha:"22:18"},
+    19: {imsak:"03:00", sunrise:"05:02", dhuhr:"12:49", asr:"16:50", maghrib:"20:26", isha:"22:19"},
+    20: {imsak:"03:00", sunrise:"05:03", dhuhr:"12:49", asr:"16:50", maghrib:"20:26", isha:"22:19"},
+    21: {imsak:"03:00", sunrise:"05:03", dhuhr:"12:49", asr:"16:50", maghrib:"20:26", isha:"22:19"},
+    22: {imsak:"03:00", sunrise:"05:03", dhuhr:"12:50", asr:"16:50", maghrib:"20:27", isha:"22:19"},
+    23: {imsak:"03:01", sunrise:"05:03", dhuhr:"12:50", asr:"16:50", maghrib:"20:27", isha:"22:20"},
+    24: {imsak:"03:01", sunrise:"05:03", dhuhr:"12:50", asr:"16:51", maghrib:"20:27", isha:"22:20"},
+    25: {imsak:"03:01", sunrise:"05:04", dhuhr:"12:50", asr:"16:51", maghrib:"20:27", isha:"22:20"},
+    26: {imsak:"03:02", sunrise:"05:04", dhuhr:"12:51", asr:"16:51", maghrib:"20:27", isha:"22:20"},
+    27: {imsak:"03:02", sunrise:"05:04", dhuhr:"12:51", asr:"16:51", maghrib:"20:27", isha:"22:19"},
+    28: {imsak:"03:03", sunrise:"05:05", dhuhr:"12:51", asr:"16:51", maghrib:"20:27", isha:"22:19"},
+    29: {imsak:"03:04", sunrise:"05:05", dhuhr:"12:51", asr:"16:52", maghrib:"20:27", isha:"22:19"},
+    30: {imsak:"03:04", sunrise:"05:06", dhuhr:"12:51", asr:"16:52", maghrib:"20:27", isha:"22:19"},
+  },
+  7: {
+    1: {imsak:"03:05", sunrise:"05:06", dhuhr:"12:52", asr:"16:52", maghrib:"20:27", isha:"22:19"},
+    2: {imsak:"03:06", sunrise:"05:07", dhuhr:"12:52", asr:"16:52", maghrib:"20:27", isha:"22:18"},
+    3: {imsak:"03:07", sunrise:"05:07", dhuhr:"12:52", asr:"16:52", maghrib:"20:27", isha:"22:18"},
+    4: {imsak:"03:08", sunrise:"05:08", dhuhr:"12:52", asr:"16:52", maghrib:"20:27", isha:"22:17"},
+    5: {imsak:"03:08", sunrise:"05:08", dhuhr:"12:52", asr:"16:52", maghrib:"20:26", isha:"22:17"},
+    6: {imsak:"03:09", sunrise:"05:09", dhuhr:"12:52", asr:"16:52", maghrib:"20:26", isha:"22:16"},
+    7: {imsak:"03:10", sunrise:"05:09", dhuhr:"12:53", asr:"16:52", maghrib:"20:26", isha:"22:16"},
+    8: {imsak:"03:12", sunrise:"05:10", dhuhr:"12:53", asr:"16:52", maghrib:"20:25", isha:"22:15"},
+    9: {imsak:"03:13", sunrise:"05:11", dhuhr:"12:53", asr:"16:52", maghrib:"20:25", isha:"22:14"},
+    10: {imsak:"03:14", sunrise:"05:12", dhuhr:"12:53", asr:"16:53", maghrib:"20:25", isha:"22:13"},
+    11: {imsak:"03:15", sunrise:"05:12", dhuhr:"12:53", asr:"16:53", maghrib:"20:24", isha:"22:13"},
+    12: {imsak:"03:16", sunrise:"05:13", dhuhr:"12:53", asr:"16:53", maghrib:"20:24", isha:"22:12"},
+    13: {imsak:"03:17", sunrise:"05:14", dhuhr:"12:53", asr:"16:53", maghrib:"20:23", isha:"22:11"},
+    14: {imsak:"03:19", sunrise:"05:14", dhuhr:"12:54", asr:"16:52", maghrib:"20:23", isha:"22:10"},
+    15: {imsak:"03:20", sunrise:"05:15", dhuhr:"12:54", asr:"16:52", maghrib:"20:22", isha:"22:09"},
+    16: {imsak:"03:21", sunrise:"05:16", dhuhr:"12:54", asr:"16:52", maghrib:"20:21", isha:"22:08"},
+    17: {imsak:"03:23", sunrise:"05:17", dhuhr:"12:54", asr:"16:52", maghrib:"20:21", isha:"22:07"},
+    18: {imsak:"03:24", sunrise:"05:18", dhuhr:"12:54", asr:"16:52", maghrib:"20:20", isha:"22:05"},
+    19: {imsak:"03:25", sunrise:"05:19", dhuhr:"12:54", asr:"16:52", maghrib:"20:19", isha:"22:04"},
+    20: {imsak:"03:27", sunrise:"05:19", dhuhr:"12:54", asr:"16:52", maghrib:"20:19", isha:"22:03"},
+    21: {imsak:"03:28", sunrise:"05:20", dhuhr:"12:54", asr:"16:52", maghrib:"20:18", isha:"22:02"},
+    22: {imsak:"03:30", sunrise:"05:21", dhuhr:"12:54", asr:"16:52", maghrib:"20:17", isha:"22:00"},
+    23: {imsak:"03:31", sunrise:"05:22", dhuhr:"12:54", asr:"16:51", maghrib:"20:16", isha:"21:59"},
+    24: {imsak:"03:33", sunrise:"05:23", dhuhr:"12:54", asr:"16:51", maghrib:"20:16", isha:"21:58"},
+    25: {imsak:"03:34", sunrise:"05:24", dhuhr:"12:54", asr:"16:51", maghrib:"20:15", isha:"21:56"},
+    26: {imsak:"03:36", sunrise:"05:25", dhuhr:"12:54", asr:"16:50", maghrib:"20:14", isha:"21:55"},
+    27: {imsak:"03:37", sunrise:"05:26", dhuhr:"12:54", asr:"16:50", maghrib:"20:13", isha:"21:53"},
+    28: {imsak:"03:39", sunrise:"05:27", dhuhr:"12:54", asr:"16:50", maghrib:"20:12", isha:"21:52"},
+    29: {imsak:"03:40", sunrise:"05:28", dhuhr:"12:54", asr:"16:50", maghrib:"20:11", isha:"21:50"},
+    30: {imsak:"03:42", sunrise:"05:29", dhuhr:"12:54", asr:"16:49", maghrib:"20:10", isha:"21:49"},
+    31: {imsak:"03:43", sunrise:"05:30", dhuhr:"12:54", asr:"16:49", maghrib:"20:09", isha:"21:47"},
+  },
+  8: {
+    1: {imsak:"03:45", sunrise:"05:31", dhuhr:"12:54", asr:"16:49", maghrib:"20:08", isha:"21:46"},
+    2: {imsak:"03:47", sunrise:"05:32", dhuhr:"12:54", asr:"16:48", maghrib:"20:07", isha:"21:44"},
+    3: {imsak:"03:48", sunrise:"05:33", dhuhr:"12:54", asr:"16:48", maghrib:"20:05", isha:"21:42"},
+    4: {imsak:"03:50", sunrise:"05:33", dhuhr:"12:54", asr:"16:48", maghrib:"20:04", isha:"21:41"},
+    5: {imsak:"03:51", sunrise:"05:34", dhuhr:"12:54", asr:"16:47", maghrib:"20:03", isha:"21:39"},
+    6: {imsak:"03:53", sunrise:"05:35", dhuhr:"12:54", asr:"16:47", maghrib:"20:02", isha:"21:37"},
+    7: {imsak:"03:54", sunrise:"05:36", dhuhr:"12:54", asr:"16:46", maghrib:"20:01", isha:"21:36"},
+    8: {imsak:"03:56", sunrise:"05:37", dhuhr:"12:53", asr:"16:46", maghrib:"19:59", isha:"21:34"},
+    9: {imsak:"03:57", sunrise:"05:38", dhuhr:"12:53", asr:"16:45", maghrib:"19:58", isha:"21:32"},
+    10: {imsak:"03:59", sunrise:"05:39", dhuhr:"12:53", asr:"16:45", maghrib:"19:57", isha:"21:30"},
+    11: {imsak:"04:00", sunrise:"05:40", dhuhr:"12:53", asr:"16:44", maghrib:"19:56", isha:"21:29"},
+    12: {imsak:"04:02", sunrise:"05:41", dhuhr:"12:53", asr:"16:44", maghrib:"19:54", isha:"21:27"},
+    13: {imsak:"04:04", sunrise:"05:43", dhuhr:"12:53", asr:"16:43", maghrib:"19:53", isha:"21:25"},
+    14: {imsak:"04:05", sunrise:"05:44", dhuhr:"12:53", asr:"16:42", maghrib:"19:51", isha:"21:23"},
+    15: {imsak:"04:07", sunrise:"05:45", dhuhr:"12:52", asr:"16:42", maghrib:"19:50", isha:"21:21"},
+    16: {imsak:"04:08", sunrise:"05:46", dhuhr:"12:52", asr:"16:41", maghrib:"19:49", isha:"21:19"},
+    17: {imsak:"04:10", sunrise:"05:47", dhuhr:"12:52", asr:"16:40", maghrib:"19:47", isha:"21:18"},
+    18: {imsak:"04:11", sunrise:"05:48", dhuhr:"12:52", asr:"16:40", maghrib:"19:46", isha:"21:16"},
+    19: {imsak:"04:12", sunrise:"05:49", dhuhr:"12:51", asr:"16:39", maghrib:"19:44", isha:"21:14"},
+    20: {imsak:"04:14", sunrise:"05:50", dhuhr:"12:51", asr:"16:38", maghrib:"19:43", isha:"21:12"},
+    21: {imsak:"04:15", sunrise:"05:51", dhuhr:"12:51", asr:"16:38", maghrib:"19:41", isha:"21:10"},
+    22: {imsak:"04:17", sunrise:"05:52", dhuhr:"12:51", asr:"16:37", maghrib:"19:40", isha:"21:08"},
+    23: {imsak:"04:18", sunrise:"05:53", dhuhr:"12:51", asr:"16:36", maghrib:"19:38", isha:"21:06"},
+    24: {imsak:"04:20", sunrise:"05:54", dhuhr:"12:50", asr:"16:35", maghrib:"19:37", isha:"21:04"},
+    25: {imsak:"04:21", sunrise:"05:55", dhuhr:"12:50", asr:"16:34", maghrib:"19:35", isha:"21:02"},
+    26: {imsak:"04:23", sunrise:"05:56", dhuhr:"12:50", asr:"16:34", maghrib:"19:34", isha:"21:01"},
+    27: {imsak:"04:24", sunrise:"05:57", dhuhr:"12:50", asr:"16:33", maghrib:"19:32", isha:"20:59"},
+    28: {imsak:"04:25", sunrise:"05:58", dhuhr:"12:49", asr:"16:32", maghrib:"19:31", isha:"20:57"},
+    29: {imsak:"04:27", sunrise:"05:59", dhuhr:"12:49", asr:"16:31", maghrib:"19:29", isha:"20:55"},
+    30: {imsak:"04:28", sunrise:"06:00", dhuhr:"12:49", asr:"16:30", maghrib:"19:27", isha:"20:53"},
+    31: {imsak:"04:29", sunrise:"06:01", dhuhr:"12:48", asr:"16:29", maghrib:"19:26", isha:"20:51"},
+  },
+  9: {
+    1: {imsak:"04:31", sunrise:"06:02", dhuhr:"12:48", asr:"16:28", maghrib:"19:24", isha:"20:49"},
+    2: {imsak:"04:32", sunrise:"06:03", dhuhr:"12:48", asr:"16:27", maghrib:"19:22", isha:"20:47"},
+    3: {imsak:"04:33", sunrise:"06:04", dhuhr:"12:47", asr:"16:26", maghrib:"19:21", isha:"20:45"},
+    4: {imsak:"04:35", sunrise:"06:05", dhuhr:"12:47", asr:"16:25", maghrib:"19:19", isha:"20:43"},
+    5: {imsak:"04:36", sunrise:"06:06", dhuhr:"12:47", asr:"16:24", maghrib:"19:17", isha:"20:41"},
+    6: {imsak:"04:37", sunrise:"06:07", dhuhr:"12:46", asr:"16:23", maghrib:"19:16", isha:"20:39"},
+    7: {imsak:"04:39", sunrise:"06:08", dhuhr:"12:46", asr:"16:22", maghrib:"19:14", isha:"20:37"},
+    8: {imsak:"04:40", sunrise:"06:09", dhuhr:"12:46", asr:"16:21", maghrib:"19:12", isha:"20:35"},
+    9: {imsak:"04:41", sunrise:"06:10", dhuhr:"12:45", asr:"16:20", maghrib:"19:11", isha:"20:33"},
+    10: {imsak:"04:42", sunrise:"06:11", dhuhr:"12:45", asr:"16:19", maghrib:"19:09", isha:"20:31"},
+    11: {imsak:"04:44", sunrise:"06:12", dhuhr:"12:45", asr:"16:18", maghrib:"19:07", isha:"20:30"},
+    12: {imsak:"04:45", sunrise:"06:13", dhuhr:"12:44", asr:"16:17", maghrib:"19:06", isha:"20:28"},
+    13: {imsak:"04:46", sunrise:"06:14", dhuhr:"12:44", asr:"16:16", maghrib:"19:04", isha:"20:26"},
+    14: {imsak:"04:47", sunrise:"06:15", dhuhr:"12:43", asr:"16:15", maghrib:"19:02", isha:"20:24"},
+    15: {imsak:"04:49", sunrise:"06:16", dhuhr:"12:43", asr:"16:14", maghrib:"19:00", isha:"20:22"},
+    16: {imsak:"04:50", sunrise:"06:17", dhuhr:"12:43", asr:"16:13", maghrib:"18:59", isha:"20:20"},
+    17: {imsak:"04:51", sunrise:"06:18", dhuhr:"12:42", asr:"16:11", maghrib:"18:57", isha:"20:18"},
+    18: {imsak:"04:52", sunrise:"06:19", dhuhr:"12:42", asr:"16:10", maghrib:"18:55", isha:"20:16"},
+    19: {imsak:"04:53", sunrise:"06:20", dhuhr:"12:41", asr:"16:09", maghrib:"18:54", isha:"20:14"},
+    20: {imsak:"04:55", sunrise:"06:21", dhuhr:"12:41", asr:"16:08", maghrib:"18:52", isha:"20:12"},
+    21: {imsak:"04:56", sunrise:"06:22", dhuhr:"12:41", asr:"16:07", maghrib:"18:50", isha:"20:11"},
+    22: {imsak:"04:57", sunrise:"06:23", dhuhr:"12:40", asr:"16:06", maghrib:"18:48", isha:"20:09"},
+    23: {imsak:"04:58", sunrise:"06:24", dhuhr:"12:40", asr:"16:04", maghrib:"18:47", isha:"20:07"},
+    24: {imsak:"04:59", sunrise:"06:25", dhuhr:"12:40", asr:"16:03", maghrib:"18:45", isha:"20:05"},
+    25: {imsak:"05:00", sunrise:"06:26", dhuhr:"12:39", asr:"16:02", maghrib:"18:43", isha:"20:03"},
+    26: {imsak:"05:01", sunrise:"06:27", dhuhr:"12:39", asr:"16:01", maghrib:"18:42", isha:"20:01"},
+    27: {imsak:"05:03", sunrise:"06:28", dhuhr:"12:39", asr:"16:00", maghrib:"18:40", isha:"20:00"},
+    28: {imsak:"05:04", sunrise:"06:29", dhuhr:"12:38", asr:"15:58", maghrib:"18:38", isha:"19:58"},
+    29: {imsak:"05:05", sunrise:"06:30", dhuhr:"12:38", asr:"15:57", maghrib:"18:36", isha:"19:56"},
+    30: {imsak:"05:06", sunrise:"06:31", dhuhr:"12:38", asr:"15:56", maghrib:"18:35", isha:"19:54"},
+  },
+  10: {
+    1: {imsak:"05:07", sunrise:"06:32", dhuhr:"12:38", asr:"15:55", maghrib:"18:33", isha:"19:53"},
+    2: {imsak:"05:08", sunrise:"06:33", dhuhr:"12:37", asr:"15:53", maghrib:"18:31", isha:"19:51"},
+    3: {imsak:"05:09", sunrise:"06:34", dhuhr:"12:37", asr:"15:52", maghrib:"18:30", isha:"19:49"},
+    4: {imsak:"05:10", sunrise:"06:35", dhuhr:"12:37", asr:"15:51", maghrib:"18:28", isha:"19:47"},
+    5: {imsak:"05:11", sunrise:"06:36", dhuhr:"12:36", asr:"15:50", maghrib:"18:26", isha:"19:46"},
+    6: {imsak:"05:13", sunrise:"06:37", dhuhr:"12:36", asr:"15:49", maghrib:"18:25", isha:"19:44"},
+    7: {imsak:"05:14", sunrise:"06:38", dhuhr:"12:36", asr:"15:47", maghrib:"18:23", isha:"19:42"},
+    8: {imsak:"05:15", sunrise:"06:39", dhuhr:"12:35", asr:"15:46", maghrib:"18:21", isha:"19:41"},
+    9: {imsak:"05:16", sunrise:"06:41", dhuhr:"12:35", asr:"15:45", maghrib:"18:20", isha:"19:39"},
+    10: {imsak:"05:17", sunrise:"06:42", dhuhr:"12:35", asr:"15:44", maghrib:"18:18", isha:"19:37"},
+    11: {imsak:"05:18", sunrise:"06:43", dhuhr:"12:35", asr:"15:42", maghrib:"18:16", isha:"19:36"},
+    12: {imsak:"05:19", sunrise:"06:44", dhuhr:"12:34", asr:"15:41", maghrib:"18:15", isha:"19:34"},
+    13: {imsak:"05:20", sunrise:"06:45", dhuhr:"12:34", asr:"15:40", maghrib:"18:13", isha:"19:33"},
+    14: {imsak:"05:21", sunrise:"06:46", dhuhr:"12:34", asr:"15:39", maghrib:"18:12", isha:"19:31"},
+    15: {imsak:"05:22", sunrise:"06:47", dhuhr:"12:34", asr:"15:38", maghrib:"18:10", isha:"19:30"},
+    16: {imsak:"05:23", sunrise:"06:48", dhuhr:"12:33", asr:"15:36", maghrib:"18:09", isha:"19:28"},
+    17: {imsak:"05:24", sunrise:"06:49", dhuhr:"12:33", asr:"15:35", maghrib:"18:07", isha:"19:27"},
+    18: {imsak:"05:25", sunrise:"06:50", dhuhr:"12:33", asr:"15:34", maghrib:"18:05", isha:"19:25"},
+    19: {imsak:"05:26", sunrise:"06:52", dhuhr:"12:33", asr:"15:33", maghrib:"18:04", isha:"19:24"},
+    20: {imsak:"05:28", sunrise:"06:53", dhuhr:"12:33", asr:"15:32", maghrib:"18:02", isha:"19:22"},
+    21: {imsak:"05:29", sunrise:"06:54", dhuhr:"12:32", asr:"15:31", maghrib:"18:01", isha:"19:21"},
+    22: {imsak:"05:30", sunrise:"06:55", dhuhr:"12:32", asr:"15:29", maghrib:"18:00", isha:"19:20"},
+    23: {imsak:"05:31", sunrise:"06:56", dhuhr:"12:32", asr:"15:28", maghrib:"17:58", isha:"19:18"},
+    24: {imsak:"05:32", sunrise:"06:57", dhuhr:"12:32", asr:"15:27", maghrib:"17:57", isha:"19:17"},
+    25: {imsak:"04:33", sunrise:"05:58", dhuhr:"11:32", asr:"14:26", maghrib:"16:55", isha:"18:16"},
+    26: {imsak:"04:34", sunrise:"06:00", dhuhr:"11:32", asr:"14:25", maghrib:"16:54", isha:"18:14"},
+    27: {imsak:"04:35", sunrise:"06:01", dhuhr:"11:32", asr:"14:24", maghrib:"16:52", isha:"18:13"},
+    28: {imsak:"04:36", sunrise:"06:02", dhuhr:"11:32", asr:"14:23", maghrib:"16:51", isha:"18:12"},
+    29: {imsak:"04:37", sunrise:"06:03", dhuhr:"11:31", asr:"14:22", maghrib:"16:50", isha:"18:11"},
+    30: {imsak:"04:38", sunrise:"06:04", dhuhr:"11:31", asr:"14:21", maghrib:"16:48", isha:"18:09"},
+    31: {imsak:"04:39", sunrise:"06:05", dhuhr:"11:31", asr:"14:20", maghrib:"16:47", isha:"18:08"},
+  },
+  11: {
+    1: {imsak:"04:40", sunrise:"06:07", dhuhr:"11:31", asr:"14:19", maghrib:"16:46", isha:"18:07"},
+    2: {imsak:"04:41", sunrise:"06:08", dhuhr:"11:31", asr:"14:18", maghrib:"16:45", isha:"18:06"},
+    3: {imsak:"04:42", sunrise:"06:09", dhuhr:"11:31", asr:"14:17", maghrib:"16:43", isha:"18:05"},
+    4: {imsak:"04:43", sunrise:"06:10", dhuhr:"11:31", asr:"14:16", maghrib:"16:42", isha:"18:04"},
+    5: {imsak:"04:44", sunrise:"06:11", dhuhr:"11:31", asr:"14:15", maghrib:"16:41", isha:"18:03"},
+    6: {imsak:"04:46", sunrise:"06:13", dhuhr:"11:31", asr:"14:14", maghrib:"16:40", isha:"18:02"},
+    7: {imsak:"04:47", sunrise:"06:14", dhuhr:"11:31", asr:"14:13", maghrib:"16:39", isha:"18:01"},
+    8: {imsak:"04:48", sunrise:"06:15", dhuhr:"11:31", asr:"14:12", maghrib:"16:38", isha:"18:00"},
+    9: {imsak:"04:49", sunrise:"06:16", dhuhr:"11:31", asr:"14:11", maghrib:"16:37", isha:"17:59"},
+    10: {imsak:"04:50", sunrise:"06:17", dhuhr:"11:32", asr:"14:11", maghrib:"16:36", isha:"17:58"},
+    11: {imsak:"04:51", sunrise:"06:19", dhuhr:"11:32", asr:"14:10", maghrib:"16:35", isha:"17:57"},
+    12: {imsak:"04:52", sunrise:"06:20", dhuhr:"11:32", asr:"14:09", maghrib:"16:34", isha:"17:56"},
+    13: {imsak:"04:53", sunrise:"06:21", dhuhr:"11:32", asr:"14:08", maghrib:"16:33", isha:"17:56"},
+    14: {imsak:"04:54", sunrise:"06:22", dhuhr:"11:32", asr:"14:08", maghrib:"16:32", isha:"17:55"},
+    15: {imsak:"04:55", sunrise:"06:24", dhuhr:"11:32", asr:"14:07", maghrib:"16:31", isha:"17:54"},
+    16: {imsak:"04:56", sunrise:"06:25", dhuhr:"11:32", asr:"14:06", maghrib:"16:30", isha:"17:53"},
+    17: {imsak:"04:57", sunrise:"06:26", dhuhr:"11:33", asr:"14:06", maghrib:"16:29", isha:"17:53"},
+    18: {imsak:"04:58", sunrise:"06:27", dhuhr:"11:33", asr:"14:05", maghrib:"16:28", isha:"17:52"},
+    19: {imsak:"04:59", sunrise:"06:28", dhuhr:"11:33", asr:"14:04", maghrib:"16:28", isha:"17:52"},
+    20: {imsak:"05:00", sunrise:"06:29", dhuhr:"11:33", asr:"14:03", maghrib:"16:27", isha:"17:51"},
+    21: {imsak:"05:01", sunrise:"06:31", dhuhr:"11:33", asr:"14:03", maghrib:"16:26", isha:"17:51"},
+    22: {imsak:"05:02", sunrise:"06:32", dhuhr:"11:34", asr:"14:02", maghrib:"16:26", isha:"17:50"},
+    23: {imsak:"05:03", sunrise:"06:33", dhuhr:"11:34", asr:"14:02", maghrib:"16:25", isha:"17:50"},
+    24: {imsak:"05:04", sunrise:"06:34", dhuhr:"11:34", asr:"14:01", maghrib:"16:24", isha:"17:49"},
+    25: {imsak:"05:05", sunrise:"06:35", dhuhr:"11:34", asr:"14:01", maghrib:"16:24", isha:"17:49"},
+    26: {imsak:"05:06", sunrise:"06:36", dhuhr:"11:34", asr:"14:00", maghrib:"16:23", isha:"17:48"},
+    27: {imsak:"05:07", sunrise:"06:37", dhuhr:"11:34", asr:"14:01", maghrib:"16:23", isha:"17:48"},
+    28: {imsak:"05:08", sunrise:"06:39", dhuhr:"11:35", asr:"14:00", maghrib:"16:22", isha:"17:48"},
+    29: {imsak:"05:09", sunrise:"06:40", dhuhr:"11:35", asr:"14:00", maghrib:"16:22", isha:"17:48"},
+    30: {imsak:"05:10", sunrise:"06:41", dhuhr:"11:36", asr:"14:00", maghrib:"16:22", isha:"17:47"},
+  },
+  12: {
+    1: {imsak:"05:10", sunrise:"06:42", dhuhr:"11:37", asr:"14:00", maghrib:"16:21", isha:"17:47"},
+    2: {imsak:"05:11", sunrise:"06:43", dhuhr:"11:37", asr:"14:00", maghrib:"16:21", isha:"17:47"},
+    3: {imsak:"05:12", sunrise:"06:44", dhuhr:"11:37", asr:"13:59", maghrib:"16:21", isha:"17:47"},
+    4: {imsak:"05:13", sunrise:"06:45", dhuhr:"11:38", asr:"13:59", maghrib:"16:21", isha:"17:47"},
+    5: {imsak:"05:14", sunrise:"06:46", dhuhr:"11:38", asr:"13:59", maghrib:"16:20", isha:"17:47"},
+    6: {imsak:"05:15", sunrise:"06:47", dhuhr:"11:38", asr:"13:59", maghrib:"16:20", isha:"17:47"},
+    7: {imsak:"05:16", sunrise:"06:48", dhuhr:"11:39", asr:"13:59", maghrib:"16:20", isha:"17:47"},
+    8: {imsak:"05:16", sunrise:"06:49", dhuhr:"11:39", asr:"13:59", maghrib:"16:20", isha:"17:47"},
+    9: {imsak:"05:17", sunrise:"06:49", dhuhr:"11:40", asr:"13:59", maghrib:"16:20", isha:"17:47"},
+    10: {imsak:"05:18", sunrise:"06:50", dhuhr:"11:40", asr:"13:59", maghrib:"16:20", isha:"17:47"},
+    11: {imsak:"05:19", sunrise:"06:51", dhuhr:"11:41", asr:"13:59", maghrib:"16:20", isha:"17:47"},
+    12: {imsak:"05:19", sunrise:"06:52", dhuhr:"11:41", asr:"14:00", maghrib:"16:20", isha:"17:47"},
+    13: {imsak:"05:20", sunrise:"06:53", dhuhr:"11:42", asr:"14:00", maghrib:"16:21", isha:"17:48"},
+    14: {imsak:"05:21", sunrise:"06:53", dhuhr:"11:42", asr:"14:00", maghrib:"16:21", isha:"17:48"},
+    15: {imsak:"05:22", sunrise:"06:54", dhuhr:"11:43", asr:"14:00", maghrib:"16:21", isha:"17:48"},
+    16: {imsak:"05:22", sunrise:"06:55", dhuhr:"11:43", asr:"14:01", maghrib:"16:21", isha:"17:48"},
+    17: {imsak:"05:23", sunrise:"06:56", dhuhr:"11:44", asr:"14:01", maghrib:"16:22", isha:"17:49"},
+    18: {imsak:"05:23", sunrise:"06:56", dhuhr:"11:44", asr:"14:01", maghrib:"16:22", isha:"17:49"},
+    19: {imsak:"05:24", sunrise:"06:57", dhuhr:"11:45", asr:"14:02", maghrib:"16:22", isha:"17:50"},
+    20: {imsak:"05:25", sunrise:"06:57", dhuhr:"11:45", asr:"14:02", maghrib:"16:23", isha:"17:50"},
+    21: {imsak:"05:25", sunrise:"06:58", dhuhr:"11:46", asr:"14:03", maghrib:"16:23", isha:"17:50"},
+    22: {imsak:"05:26", sunrise:"06:58", dhuhr:"11:46", asr:"14:03", maghrib:"16:24", isha:"17:51"},
+    23: {imsak:"05:26", sunrise:"06:59", dhuhr:"11:47", asr:"14:04", maghrib:"16:24", isha:"17:51"},
+    24: {imsak:"05:27", sunrise:"06:59", dhuhr:"11:47", asr:"14:04", maghrib:"16:25", isha:"17:52"},
+    25: {imsak:"05:27", sunrise:"07:00", dhuhr:"11:48", asr:"14:05", maghrib:"16:25", isha:"17:53"},
+    26: {imsak:"05:27", sunrise:"07:00", dhuhr:"11:48", asr:"14:05", maghrib:"16:26", isha:"17:53"},
+    27: {imsak:"05:28", sunrise:"07:01", dhuhr:"11:49", asr:"14:06", maghrib:"16:27", isha:"17:54"},
+    28: {imsak:"05:28", sunrise:"07:01", dhuhr:"11:49", asr:"14:07", maghrib:"16:27", isha:"17:54"},
+    29: {imsak:"05:28", sunrise:"07:01", dhuhr:"11:49", asr:"14:07", maghrib:"16:28", isha:"17:55"},
+    30: {imsak:"05:29", sunrise:"07:01", dhuhr:"11:50", asr:"14:08", maghrib:"16:29", isha:"17:55"},
+    31: {imsak:"05:29", sunrise:"07:01", dhuhr:"11:50", asr:"14:09", maghrib:"16:29", isha:"17:56"},
+  },
+};
+
+
+function subMin(hhmm, mins){
+  const [h, m] = hhmm.split(':').map(Number);
+  let total = h * 60 + m - mins;
+  if(total < 0) total += 1440;
+  return `${String(Math.floor(total/60)).padStart(2,'0')}:${String(total%60).padStart(2,'0')}`;
+}
+
+function computeTimes(date){
+  // Merr kohet nga KMSH 2026 (Durrës +2')
+  const m = date.getMonth() + 1;
+  const day = date.getDate();
+  const kmsh = (KMSH_TIMES[m] && KMSH_TIMES[m][day]) ? KMSH_TIMES[m][day] : null;
+
+  if(kmsh){
+    // Imsaku = vlera nga KMSH (kolona e parë)
+    // Sabahu (koha e namazit) = Lindja e Diellit - 60 minuta
+    const sabah = subMin(kmsh.sunrise, 60);
+    return {
+      fajr:    sabah,
+      imsak:   kmsh.imsak,
+      sunrise: kmsh.sunrise,
+      dhuhr:   kmsh.dhuhr,
+      asr:     kmsh.asr,
+      maghrib: kmsh.maghrib,
+      isha:    kmsh.isha,
+    };
+  }
+  // fallback astronomik nëse data nuk gjendet
+  const Sunrise= hourAngle(0.833, 'before');
+  function asrAngle(shadow){
+    return toDeg(Math.atan(1/(shadow + Math.tan(toRad(Math.abs(LAT - d))))));
+  }
+  const Asr = Dhuhr + toDeg(Math.acos(
+    (Math.sin(toRad(asrAngle(1))) - Math.sin(toRad(LAT))*Math.sin(toRad(d))) /
+    (Math.cos(toRad(LAT))*Math.cos(toRad(d)))
+  )) / 15;
+  const Maghrib= hourAngle(0.833, 'after');
+  const Isha   = hourAngle(17, 'after');
+  const sunriseStr = toHHMM(Sunrise);
+  return {
+    fajr:    subMin(sunriseStr, 60),
+    imsak:   toHHMM(Fajr),
+    sunrise: sunriseStr,
+    dhuhr:   toHHMM(Dhuhr + 0.0167),
+    asr:     toHHMM(Asr),
+    maghrib: toHHMM(Maghrib),
+    isha:    toHHMM(Isha),
+  };
+}
+
+function getTimezoneOffset(date){
+  const y = date.getFullYear();
+  const dstStart = lastSunday(y, 2, 2);
+  const dstEnd   = lastSunday(y, 9, 3);
+  if(date >= dstStart && date < dstEnd) return 2;
+  return 1;
+}
+
+function lastSunday(y, month, hour){
+  const d = new Date(y, month+1, 0);
+  d.setDate(d.getDate() - d.getDay());
+  d.setHours(hour, 0, 0, 0);
+  return d;
+}
+
+function toHHMM(h){
+  h = fixHour(h);
+  const hh = Math.floor(h);
+  const mm = Math.round((h - hh) * 60);
+  const mmFix = mm === 60 ? 0 : mm;
+  const hhFix = mm === 60 ? hh + 1 : hh;
+  return `${String(hhFix%24).padStart(2,'0')}:${String(mmFix).padStart(2,'0')}`;
+}
+
+function timeToHour(hhmm){
+  const [h,m] = hhmm.split(':').map(Number);
+  return h + m/60;
+}
+
+function toHijri(date){
+  const JD = Math.floor(julianDay(date));
+  const l = JD - 1948440 + 10632;
+  const n = Math.floor((l-1)/10631);
+  const l2 = l - 10631*n + 354;
+  const j = Math.floor((10985-l2)/5316) * Math.floor(50*l2/17719) +
+            Math.floor(l2/5670) * Math.floor(43*l2/15238);
+  const l3 = l2 - Math.floor((30-j)/15) * Math.floor(17719*j/50) -
+             Math.floor(j/16) * Math.floor(15238*j/43) + 29;
+  const m = Math.floor(24*l3/709);
+  const d = l3 - Math.floor(709*m/24);
+  const y = 30*n + j - 30;
+
+  const months = ['Muharrem','Safar','Rebi-ul-evvel','Rebi-ul-ahir',
+    'Xhumadel-ula','Xhumadel-uhra','Rexheb','Sha\'ban',
+    'Ramazan','Sheval','Dhul-ka\'de','Dhul-hixhxhe'];
+  return `${d} ${months[m-1]} ${y} H`;
+}
+
+const ALB_MONTHS = ['Janar','Shkurt','Mars','Prill','Maj','Qershor',
+  'Korrik','Gusht','Shtator','Tetor','Nëntor','Dhjetor'];
+const ALB_DAYS   = ['E diel','E hënë','E martë','E mërkurë','E enjte','E premte','E shtunë'];
+
+/* ===== STARS REGION MODIFIED ===== */
+function initStars(){
+  const canvas = document.getElementById('starCanvas');
+  const ctx = canvas.getContext('2d');
+  let W, H, stars = [];
+
+  function resize(){
+    W = canvas.width  = window.innerWidth;
+    H = canvas.height = window.innerHeight;
+    stars = Array.from({length:114}, () => ({
+      x: Math.random()*W,
+      y: Math.random()*H,
+      r: Math.random()*1.6 + 0.6,
+      speed: Math.random()*0.008 + 0.004,
+      phase: Math.random()*Math.PI,
+    }));
+  }
+
+  function draw(){
+    ctx.clearRect(0,0,W,H);
+    stars.forEach(s=>{
+      s.phase += s.speed;
+      
+      if (s.phase >= Math.PI) {
+        s.phase = 0;
+        s.x = Math.random()*W;
+        s.y = Math.random()*H;
+      }
+      
+      const a = Math.sin(s.phase);
+      
+      ctx.beginPath();
+      ctx.arc(s.x, s.y, s.r, 0, Math.PI*2);
+      ctx.fillStyle = `rgba(255, 254, 230, ${a.toFixed(3)})`;
+      ctx.fill();
+    });
+    requestAnimationFrame(draw);
+  }
+
+  window.addEventListener('resize', resize);
+  resize();
+  requestAnimationFrame(draw);
+}
+
+const BG_THEMES = {
+  night_pre_fajr: { c1:'#04070f', c2:'#0a1020' },
+  fajr:           { c1:'#060e1c', c2:'#0d2240' },
+  sunrise:        { c1:'#0d1a0a', c2:'#1a3510' },
+  dhuhr:          { c1:'#0d1e2e', c2:'#183a55' },
+  asr:            { c1:'#0d1808', c2:'#1c3215' },
+  maghrib:        { c1:'#10081a', c2:'#1e1038' },
+  isha:           { c1:'#04060e', c2:'#0a0c22' },
+};
+
+function updateBackground(prayerTimes){
+  const now = new Date();
+  const h = now.getHours() + now.getMinutes()/60;
+  const fj = timeToHour(prayerTimes.fajr);
+  const sr = timeToHour(prayerTimes.sunrise);
+  const dh = timeToHour(prayerTimes.dhuhr);
+  const as = timeToHour(prayerTimes.asr);
+  const mg = timeToHour(prayerTimes.maghrib);
+  const is = timeToHour(prayerTimes.isha);
+
+  let theme;
+  if(h < fj)        theme = BG_THEMES.night_pre_fajr;
+  else if(h < sr)   theme = BG_THEMES.fajr;
+  else if(h < dh)   theme = BG_THEMES.sunrise;
+  else if(h < as)   theme = BG_THEMES.dhuhr;
+  else if(h < mg)   theme = BG_THEMES.asr;
+  else if(h < is)   theme = BG_THEMES.maghrib;
+  else              theme = BG_THEMES.isha;
+
+  const grad = document.getElementById('bgGradient');
+  grad.style.background = `radial-gradient(ellipse at 30% 20%, ${theme.c2} 0%, ${theme.c1} 70%)`;
+  document.body.style.background = theme.c1;
+}
+
+function getActivePrayer(prayerTimes){
+  const now = new Date();
+  const h = now.getHours() + now.getMinutes()/60;
+  const times = [
+    { id:'fajr',    t: timeToHour(prayerTimes.fajr) },
+    { id:'dhuhr',   t: timeToHour(prayerTimes.dhuhr) },
+    { id:'asr',     t: timeToHour(prayerTimes.asr) },
+    { id:'maghrib', t: timeToHour(prayerTimes.maghrib) },
+    { id:'isha',    t: timeToHour(prayerTimes.isha) },
+  ];
+  let active = null;
+  for(const t of times){
+    if(h >= t.t) active = t.id;
+  }
+  return active;
+}
+
+function renderMain(){
+  const now   = new Date();
+  const times = computeTimes(now);
+
+  document.getElementById('gregDate').textContent =
+    `${ALB_DAYS[now.getDay()]}, ${now.getDate()} ${ALB_MONTHS[now.getMonth()]} ${now.getFullYear()}`;
+  document.getElementById('hijriDate').textContent = toHijri(now);
+
+  document.getElementById('imsakTime').textContent = times.imsak;
+  document.getElementById('sunriseTime').textContent = times.sunrise;
+
+  const grid = document.getElementById('prayerGrid');
+  grid.innerHTML = '';
+  const active = getActivePrayer(times);
+
+  PRAYERS.forEach(p => {
+    const t = times[p.id];
+    const card = document.createElement('div');
+    card.className = 'prayer-card' + (p.id === active ? ' active-prayer' : '');
+    card.innerHTML = `
+      <div class="active-badge"></div>
+      <div class="prayer-left">
+        <div class="prayer-arabic">${p.arabic}</div>
+        <div class="prayer-alb">${p.alb}</div>
+      </div>
+      <div class="prayer-right">
+        <div class="prayer-time">${t}</div>
+        <div class="prayer-hint">${p.hint}</div>
+      </div>
+    `;
+    card.addEventListener('click', ()=> openDetail(p, t));
+    grid.appendChild(card);
+  });
+
+  updateBackground(times);
+
+  const q = QUOTES[Math.floor(Date.now()/30000) % QUOTES.length];
+  document.getElementById('quoteText').textContent = `"${q.text}"`;
+  document.getElementById('quoteSource').textContent = `— ${q.source}`;
+}
+
+function updateClock(){
+  const now = new Date();
+  const hh  = String(now.getHours()).padStart(2,'0');
+  const mm  = String(now.getMinutes()).padStart(2,'0');
+  const ss  = String(now.getSeconds()).padStart(2,'0');
+  document.getElementById('clockTime').textContent = `${hh}:${mm}:${ss}`;
+}
+
+const SALAT_DETAILS = {
+  fajr: {
+    intro: `<p style="color:var(--text-dim);font-style:italic;margin-bottom:24px;line-height:1.9;">Namazi i sabahut (fajrit) kryhet me 2 rekat sunet (mu'ekede) para dhe 2 rekat farz. Ndiqni hapat më poshtë:</p>`,
+    blocks:[{title:'2 rekat sunet mu\'ekede (para farzit)', steps: sunnetSteps(2, 'sabahut')},{title:'2 rekat farz', steps: farzSteps(2, true, 'sabahut')},{title:'Pas namazit – dhikr dhe dua', steps: postSteps()}]
+  },
+  dhuhr: {
+    intro: `<p style="color:var(--text-dim);font-style:italic;margin-bottom:24px;line-height:1.9;">Namazi i drekës kryhet me 4 rekat sunet para, 4 rekat farz dhe 2 rekat sunet pas farzit.</p>`,
+    blocks:[{ title:'4 rekat sunet (para farzit)', steps: sunnetSteps(4, 'drekës') },{ title:'4 rekat farz', steps: farzSteps(4, true, 'drekës') },{ title:'2 rekat sunet (pas farzit)', steps: sunnetSteps(2, 'drekës') },{ title:'Pas namazit – dhikr', steps: postSteps() }]
+  },
+  asr: {
+    intro: `<p style="color:var(--text-dim);font-style:italic;margin-bottom:24px;line-height:1.9;">Namazi i ikindisë kryhet me 4 rekat farz. Nuk ka sunet të rregullt para tij (por mund të falet nafile).</p>`,
+    blocks:[{ title:'4 rekat farz', steps: farzSteps(4, true, 'ikindisë') },{ title:'Pas namazit – dhikr', steps: postSteps() }]
+  },
+  maghrib: {
+    intro: `<p style="color:var(--text-dim);font-style:italic;margin-bottom:24px;line-height:1.9;">Namazi i akshamit kryhet me 3 rekat farz and 2 rekat sunet pas farzit.</p>`,
+    blocks:[{ title:'3 rekat farz', steps: farzSteps(3, true, 'akshamit') },{ title:'2 rekat sunet (pas farzit)', steps: sunnetSteps(2, 'akshamit') },{ title:'Pas namazit – dhikr', steps: postSteps() }]
+  },
+  isha: {
+    intro: `<p style="color:var(--text-dim);font-style:italic;margin-bottom:24px;line-height:1.9;">Namazi i jacisë kryhet me 4 rekat sunet para, 4 rekat farz, 2 rekat sunet pas dhe 3 rekat vitër (vaxhib).</p>`,
+    blocks:[{ title:'4 rekat sunet (para farzit)', steps: sunnetSteps(4, 'jacisë') },{ title:'4 rekat farz', steps: farzSteps(4, true, 'jacisë') },{ title:'2 rekat sunet (pas farzit)', steps: sunnetSteps(2, 'jacisë') },{ title:'3 rekat vitër (vaxhib)', steps: vitrSteps('vitrit') },{ title:'Pas namazit – dhikr', steps: postSteps() }]
+  },
+};
+
+function niyyahStep(rekats, type, prayerName){
+  const name = prayerName || '...';
+  return { 
+    label:'1. Nijeti (qëllimi)', 
+    trans:`Bëj nijet të fal ${rekats} rekate ${type} të namazit të ${name}, i kthyer nga Kibla, për hir të Allahut.`, 
+    transl:'Bëj nijet me zemër për namazin që do të falësh, pa nevojë ta shqiptosh me gojë.', 
+    note:'Nijeti (qëllimi) bëhet me zemër. Mjafton ta mendosh se po fillon namazin.' 
+  };
+}
+function tekbirStep(){ return { label:'2. Tekbiri fillestar (tahrimedja)', trans:'Allahu Ekber', transl:'Allahu është më i madhi', note:'Ngre duart deri te veshët (meshkujt), ose deri te supet (femrat), me shuplakat nga kibla.' }; }
+function senaStep(){ return { label:'3. Senaja (duaja e fillimit)', trans:'Subhaneke Allahumme ve bihamdike ve tebarekesmuke ve teala xhedduke ve la ilahe gajruke', transl:'O Allah, larg çdo mangësie je Ti, dhe lavdia Ty të takon; i bekuar është emri Yt, i lartë është madhëria Jote, dhe nuk ka zot tjetër përveç Teje.', note:'Lexohet vetëm në rekatin e parë të çdo namazi, me zë të ulët.' }; }
+function eudhStep(){ return { label:'4. Eudhu', trans:'Eudhu billahi mines shejtanir raxhim', transl:'Kërkoj mbrojtjen e Allahut nga shejtani i mallkuar.', note:'Lexohet med zë të ulët, vetëm në rekatin e parë.' }; }
+function bismilahStep(){ return { label:'5. Bismilah dhe Fatiha', trans:'Bismillahirrahmanirrahim | Elhamdu lillahi rabbil alemin. Errahmanirrahim. Maliki jevmiddin. Ijjake neabudu ve ijjake nestain. Ihdinessiratel-mustekim. Sirate-llezine en\'amte alejhim, gajril magdubi alejhim veled-dallin. Amin.', transl:'Me emrin e Allahut, Gjithëmëshirshmit, Mëshirplotit. | Lavdia i takon Allahut, Zotit të botëve. Gjithëmëshirshmi, Mëshirploti. Sunduesit të Ditës së Gjykimit. Vetëm Ty të adhurojmë dhe vetëm prej Teje ndihmë kërkojmë. Udhëzona në rrugën e drejtë. Në rrugën e atyre që Ti i ke begatuar, jo të atyre mbi të cilët ka rënë zemërimi Yt, as të atyre që kanë humbur.', note:'Fatiha lexohet në çdo rekat. Pas saj lexohet një sure ose disa ajete.' }; }
+function sureStep(){ return { label:'6. Surja pas Fatihës', trans:'Bismillahirrahmanirrahim | Kul huvallahu ehad. Allahussamad. Lem jelid velem juled. Velem jekun lehu kufuven ehad.', transl:'Me emrin e Allahut, Gjithëmëshirshmit, Mëshirplotit. | Thuaj: Ai është Allahu, Një. Allahu, i Pavarur (Absolut). Nuk ka lindur dhe nuk është i lindur. Dhe askush nuk i është i barabartë Atij.', note:'Kjo është surja Al-Ikhlas. Mund të lexohet çdo sure tjetër e memorizuar.' }; }
+function rukuStep(){ return { label:'Ruku\'u', trans:'Allahu Ekber [bjer në ruku] | Subhane rabbijal-adhim (×3)', transl:'Allahu është më i madhi. | I patëmetë është Zoti im i madhërishëm.', note:'Kurrizin e mbajmë drejt, duart te gjunjët, kokën drejt med kurrizin.' }; }
+function kijamStep(){ return { label:'Drejtim pas Ruku\'ut (Kijam)', trans:'Semi\'allahu limen hamideh [duke u drejtuar] | Rabbena lekel hamd', transl:'Allahu dëgjon atë që e falënderon. | O Zoti ynë, Ty të takon lavdia.', note:'Qëndrojmë drejt plotësisht para se të biem në sexhde.' }; }
+function sexhdeStep(){ return { label:'Sexhdeja e parë', trans:'Allahu Ekber [bie në sexhde] | Subhane rabbijal-ala (×3)', transl:'Allahu është më i madhi. | I patëmetë është Zoti im, i Lartësuari.', note:'Balli, hunda, dy duart, dy gjunjët dhe dy majat e gishtave të këmbëve prekin tokën.' }; }
+function xhullusStep(){ return { label:'Ndenjja mes dy sexhdeve (xhulus)', trans:'Allahu Ekber [u ngrit] | Rabbigfirli (×1-3)', transl:'Allahu është më i madhi. | O Zoti im, më fal.', note:'Ulemi me rehati mes dy sexhdeve para se të biem sërish.' }; }
+function sexhde2Step(){ return { label:'Sexhdeja e dytë', trans:'Allahu Ekber [bie sërish] | Subhane rabbijal-ala (×3)', transl:'Allahu është më i madhi. | I patëmetë është Zoti im, i Lartësuari.', note:'Kjo përfundon rekatin e parë. Pastaj ngrihemi për rekatin e dytë.' }; }
+function teshehhudStep(last){ return { label: last ? 'Teshehhudi i fundit + salavat' : 'Teshehhudi i ndenjjes së mesme', trans:'Et-tehijjatu lillahi ves-salavatu vet-tajjibatu. Es-selamu alejke ejjuhen-nebijju ve rahmetullahi ve berekatuh. Es-selamu alejna ve ala ibadillahis-salihin. Eshedu en la ilahe illallah ve eshedu enne Muhammeden abduhu ve resuluh.' + (last ? '\nAllahumme salli ala Muhammed ve ala ali Muhammed kema sallejte ala Ibrahim ve ala ali Ibrahim inneke hamidun mexhid. Allahumme barik ala Muhammed ve ala ali Muhammed kema barekte ala Ibrahim ve ala ali Ibrahim inneke hamidun mexhid.' : ''), transl:'Të gjitha nderimet, lutjet dhe punët e mira i takojnë Allahut. Paqja qoftë mbi ty, o Profet, mëshira e Allahut dhe bekimet e Tij. Paqja qoftë mbi ne dhe mbi të gjithë robërit e mirë të Allahut. Dëshmoj se nuk ka zot tjetër veçse Allahu, dhe dëshmoj se Muhamedi është rob dhe i Dërguar i Tij.' + (last ? '\nO Allah, dërgo salavat mbi Muhammedin dhe familjen e tij, ashtu siç dërgove mbi Ibrahimin dhe familjen e tij — me të vërtetë Ti je i Lavdishëm, i Madhërishëm. O Allah, bekoji Muhammedin dhe familjen e tij, ashtu siç bekove Ibrahimin — me të vërtetë Ti je i Lavdishëm, i Madhërishëm.' : ''), note: last ? 'Lexohet vetëm në ndenjjen e fundit, para selamit.' : 'Lexohet në rekatin e dytë kur ka 3 ose 4 rekat.' }; }
+function selamStep(){ return { label:'Selami (mbyllja e namazit)', trans:'Es-selamu alejkum ve rahmetullah [djathtas] | Es-selamu alejkum ve rahmetullah [majtas]', transl:'Paqja dhe mëshira e Allahut qofshin mbi ju [djathtas] | Paqja dhe mëshira e Allahut qofshin mbi ju [majtas]', note:'Kthehemi së pari djathtas pastaj majtas duke shqiptuar selamin. Kjo mbyll namazin.' }; }
+
+function genericSteps(rakats, type, withReading, prayerName) {
+  const s = [];
+  s.push(niyyahStep(rakats, type, prayerName));
+  s.push(tekbirStep()); s.push(senaStep()); s.push(eudhStep()); s.push(bismilahStep());
+  if(withReading) s.push(sureStep());
+  s.push(rukuStep()); s.push(kijamStep()); s.push(sexhdeStep()); s.push(xhullusStep()); s.push(sexhde2Step());
+  if(rakats >= 2){
+    s.push({ label:'Rekati i dytë', trans:'Ngrihem, lexoj Fatihën + sure', transl:'Çohem për rekatin e dytë pa bërë tekbir fillimi. Lexoj Bismilah, Fatihën dhe një sure.', note:'' });
+    s.push(rukuStep()); s.push(kijamStep()); s.push(sexhdeStep()); s.push(xhullusStep()); s.push(sexhde2Step());
+    if(rakats === 2) s.push(teshehhudStep(true));
+  }
+  if(rakats >= 3){
+    s.push(teshehhudStep(false));
+    const readIn34 = (type === 'sunet');
+    s.push({ 
+      label:'Rekati i tretë', 
+      trans: readIn34 ? 'Ngrihem, lexoj Fatihën + sure' : 'Ngrihem, lexoj vetëm Fatihën (pa sure të veçantë)', 
+      transl: readIn34 ? 'Çohem për rekatin e tretë. Lexoj Bismilah, Fatihën dhe një sure.' : 'Çohem për rekatin e tretë. Lexoj vetëm Fatihën.', 
+      note:'' 
+    });
+    s.push(rukuStep()); s.push(kijamStep()); s.push(sexhdeStep()); s.push(xhullusStep()); s.push(sexhde2Step());
+    if(rakats === 3) s.push(teshehhudStep(true));
+  }
+  if(rakats === 4){
+    const readIn4 = (type === 'sunet');
+    s.push({ 
+      label:'Rekati i katërt', 
+      trans: readIn4 ? 'Ngrihem, lexoj Fatihën + sure' : 'Ngrihem, lexoj vetëm Fatihën', 
+      transl: readIn4 ? 'Çohem për rekatin e katërt. Lexoj Bismilah, Fatihën dhe një sure.' : 'Çohem për rekatin e katërt. Lexoj vetëm Fatihën.', 
+      note:'' 
+    });
+    s.push(rukuStep()); s.push(kijamStep()); s.push(sexhdeStep()); s.push(xhullusStep()); s.push(sexhde2Step());
+    s.push(teshehhudStep(true));
+  }
+  s.push(selamStep());
+  return s;
+}
+
+function farzSteps(rakats, withReading, prayerName){
+  return genericSteps(rakats, 'farz', withReading, prayerName);
+}
+
+function sunnetSteps(rakats, prayerName){ 
+  return genericSteps(rakats, 'sunet', true, prayerName); 
+}
+
+function vitrSteps(prayerName){
+  const s = [];
+  s.push(niyyahStep(3, 'vaxhib', prayerName));
+  s.push(tekbirStep()); s.push(senaStep()); s.push(eudhStep()); s.push(bismilahStep()); s.push(sureStep());
+  s.push(rukuStep()); s.push(kijamStep()); s.push(sexhdeStep()); s.push(xhullusStep()); s.push(sexhde2Step());
+  s.push({ label:'Rekati i dytë', trans:'Ngrihem, Fatihë + sure', transl:'', note:'' });
+  s.push(rukuStep()); s.push(kijamStep()); s.push(sexhdeStep()); s.push(xhullusStep()); s.push(sexhde2Step());
+  s.push(teshehhudStep(false));
+  s.push({ label:'Rekati i tretë – dua Kunut', trans:'Ngrihem, Fatihë + sure | Allahu Ekber [tekbir kunut, ngre duart] | Allahumme inna nestainuke ve nestagfiruke ve nu\'minu bike ve netevekelu alejke ve nuthni alejkel hajre ve neshkuruke ve la nekfuruke ve nakhleue ve netruku mej jefxhuruke. Allahumme ijjake neabudu ve leke nusalli ve nexhsudu ve ilejke nes\'a ve nahfidu ve nerjua rahmeteke ve nekhsha adhabeke inne adhabeke bil-kuffari mulhik.', transl:'O Allah, prej Teje ndihmë kërkojmë, Ty falje kërkojmë, në Ty besojmë, në Ty mbështetemi, Ty të lavdërojmë med të mirën, Ty falënderojmë, nuk mohojmë, dhe largohemi dhe braktisim atë që të kundërshton Ty. O Allah, vetëm Ty të adhurojmë, vetëm për Ty falemi dhe biem në sexhde, drejt Teje ecim me hap të shpejtë, shpresojmë mëshirën Tënde dhe frikësohemi nga dënimi Yt — vërtet dënimi Yt ra mbi jobesimtarët.', note:'Duaja e Kunutit lexohet në rekatin e tretë të vitrit, pas Fatihës dhe surës.' });
+  s.push(rukuStep()); s.push(kijamStep()); s.push(sexhdeStep()); s.push(xhullusStep()); s.push(sexhde2Step());
+  s.push(teshehhudStep(true)); s.push(selamStep());
+  return s;
+}
+
+function postSteps(){
+  return [
+    { label:'Istigfar pas namazit', trans:'Astagfirullah (×3) | Allahumme entes-selamu ve minkes-selamu tebarekte ja dhel-xhelali vel-ikram', transl:'Kërkoj faljen e Allahut (×3) | O Allah, Ti je Paqja dhe prej Teje vjen paqja, i bekuar je Ti, o Zot i madhërisë dhe nderimit.', note:'Lexohet pas çdo namazi sapo jepet selami.' },
+    { label:'Subhanallah, Elhamdu lillah, Allahu Ekber', trans:'Subhanallah (×33) | Elhamdu lillah (×33) | Allahu Ekber (×33) | La ilahe illallahu vahdehu la sherike leh, lehul mulku ve lehul hamdu ve huve ala kulli shej\'in kadir', transl:'I patëmetë është Allahu (×33) | Lavdia i takon Allahut (×33) | Allahu është më i madhi (×33) | Nuk ka zot tjetër veçse Allahu, i Vetëm, pa shok. I Tij është sundimi dhe I Tij është lavdia, dhe Ai ka mundësi mbi çdo gjë.', note:'Ky dhikr pas çdo namazi shpreh falënderim dhe madhërim të Allahut.' },
+    { label:'Ajetul-Kursi', trans:'Allahu la ilahe illa huvel-hajjul-kajjum. La te\'khudhuhu sinetun vela nevmun lehu ma fis-semavati ve ma fil-ard. Men dhel-ledhi jeshfeu indeh illa biidhnin. Ja\'lemu ma bejne ejdihim ve ma halfehum ve la juhitune bishej\'im-min ilmih illa bima sha\'e. Vesi\'a kursijjuhus-semavati vel-ard. Ve la jeuduhu hifdhuhuma ve huvel-alijjul-adhim.', transl:'Allahu — nuk ka zot tjetër veçse Ai, i Gjalli, i Vetë­qëndruesshmi. Nuk e zë atë as dremitja e as gjumi. E Tija është çfarë gjendet në qiej dhe çfarë gjendet në tokë. Kush mund të ndërmjetësojë tek Ai pa lejen e Tij? Ai di çfarë është para tyre dhe çfarë është pas tyre, dhe ata nuk mund të përfshijnë asgjë nga dituria e Tij, veçse aq sa Ai do. Froni i Tij shtrihet mbi qiej dhe tokë; dhe Atij nuk i rëndon ruajtja e tyre. Ai është i Lartësuari, Madhërishmi.', note:'Leximi i Ajetul-Kursit pas çdo namazi farz, i hap dyert e xhenetit.' }
+  ];
+}
+
+function openDetail(prayer, time){
+  const main = document.getElementById('mainView');
+  const det  = document.getElementById('salatView');
+
+  document.getElementById('detailArabic').textContent = prayer.arabic;
+  document.getElementById('detailAlb').textContent = prayer.alb.toUpperCase() + ' · ' + prayer.desc.toUpperCase();
+  document.getElementById('detailMeta').innerHTML = `Koha sot: <strong>${time}</strong>`;
+
+  const data  = SALAT_DETAILS[prayer.id];
+  const body  = document.getElementById('detailBody');
+  body.innerHTML = data.intro;
+
+  data.blocks.forEach(block => {
+    const div = document.createElement('div');
+    div.className = 'rakat-block';
+    div.innerHTML = `<div class="rakat-title">${block.title}</div><div class="rakat-steps">${
+      block.steps.map(st => `
+        <div class="step">
+          <div class="step-label">${st.label}</div>
+          <div class="transliteration">${st.trans.replace(/\|/g,'<br>').replace(/\n/g,'<br><br>')}</div>
+          ${st.transl ? `<div class="translation">${st.transl.replace(/\|/g,'<br>').replace(/\n/g,'<br><br>')}</div>` : ''}
+          ${st.note ? `<div class="step-note">${st.note}</div>` : ''}
+        </div>
+      `).join('')
+    }</div>`;
+    body.appendChild(div);
+  });
+
+  main.style.display = 'none';
+  det.style.display  = 'block';
+  window.scrollTo(0,0);
+}
+
+function closeDetail(){
+  document.getElementById('mainView').style.display = 'block';
+  document.getElementById('salatView').style.display = 'none';
+  window.scrollTo(0,0);
+}
+
+let quoteIdx = 0;
+function rotateQuote(){
+  quoteIdx = (quoteIdx + 1) % QUOTES.length;
+  const q = QUOTES[quoteIdx];
+  const el = document.getElementById('quoteText');
+  el.style.opacity = '0';
+  setTimeout(()=>{
+    el.textContent = `"${q.text}"`;
+    document.getElementById('quoteSource').textContent = `— ${q.source}`;
+    el.style.opacity = '1';
+  }, 700);
+}
+
+document.addEventListener('DOMContentLoaded', ()=>{
+  initStars();
+  renderMain();
+  updateClock();
+  setInterval(updateClock, 1000);
+  setInterval(()=>{ renderMain(); }, 60000);
+  setInterval(rotateQuote, 14000);
+});
+</script>
+</body>
+</html>

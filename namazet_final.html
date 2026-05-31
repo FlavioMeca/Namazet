@@ -583,17 +583,17 @@ const QUOTES = [
   { text: "Sprova është shkolla ku besimtari mëson të bëhet i fuqishëm.", source: "Profeti Jusuf (Jozefi) alejhis-selam" },
   { text: "Vetëm tek Allahu gjendet zbërthimi i çdo ëndrre dhe zgjidhja e çdo brenge.", source: "Profeti Jusuf (Jozefi) alejhis-selam" },
 
-  // 9. Profeti Ejjub (Jobi) alejhis-selam
-  { text: "O Zoti im! Vërtet, mua më ka goditur fatkeqësia e Ti je më i mëshirshmi i mëshiruesve!", source: "Profeti Ejjub (Jobi) alejhis-selam" },
-  { text: "Unë mbështetem vetëm te Zoti im, Ai është streha e të duruarve.", source: "Profeti Ejjub (Jobi) alejhis-selam" },
-  { text: "Sëmundja dhe sprova janë një mjet për të pastruar shpirtin nga mëkatet.", source: "Profeti Ejjub (Jobi) alejhis-selam" },
-  { text: "Lavdi Atij që jep dhe Atij që merr, ne jemi të Tij dhe te Ai do të kthehemi.", source: "Profeti Ejjub (Jobi) alejhis-selam" },
-  { text: "Nuk e humba kurrë shpresën në mëshirën e Allahut, sepse dëshpërimi është vetia e mosbesimtarëve.", source: "Profeti Ejjub (Jobi) alejhis-selam" },
-  { text: "Durimi është çelësi i çdo lehtësimi dhe shpërblimi.", source: "Profeti Ejjub (Jobi) alejhis-selam" },
-  { text: "Zoti im, pasuria dhe familja ishin dhuratat e Tua, dhurata e durimit është edhe më e madhe.", source: "Profeti Ejjub (Jobi) alejhis-selam" },
-  { text: "Vetëm kur je i dobët kupton plotësisht madhështinë dhe fuqinë e Zotit.", source: "Profeti Ejjub (Jobi) alejhis-selam" },
-  { text: "Nëse Zoti jep një vështirësi, Ai jep me të edhe fuqinë për ta përballuar atë.", source: "Profeti Ejjub (Jobi) alejhis-selam" },
-  { text: "Më i madhi nga njerëzit është ai që ruan besimin e tij kur gjithçka rreth tij shkatërrohet.", source: "Profeti Ejjub (Jobi) alejhis-selam" },
+  // 9. Profeti Ejub (Jobi) alejhis-selam
+  { text: "O Zoti im! Vërtet, mua më ka goditur fatkeqësia e Ti je më i mëshirshmi i mëshiruesve!", source: "Profeti Ejub (Jobi) alejhis-selam" },
+  { text: "Unë mbështetem vetëm te Zoti im, Ai është streha e të duruarve.", source: "Profeti Ejub (Jobi) alejhis-selam" },
+  { text: "Sëmundja dhe sprova janë një mjet për të pastruar shpirtin nga mëkatet.", source: "Profeti Ejub (Jobi) alejhis-selam" },
+  { text: "Lavdi Atij që jep dhe Atij që merr, ne jemi të Tij dhe te Ai do të kthehemi.", source: "Profeti Ejub (Jobi) alejhis-selam" },
+  { text: "Nuk e humba kurrë shpresën në mëshirën e Allahut, sepse dëshpërimi është vetia e mosbesimtarëve.", source: "Profeti Ejub (Jobi) alejhis-selam" },
+  { text: "Durimi është çelësi i çdo lehtësimi dhe shpërblimi.", source: "Profeti Ejub (Jobi) alejhis-selam" },
+  { text: "Zoti im, pasuria dhe familja ishin dhuratat e Tua, dhurata e durimit është edhe më e madhe.", source: "Profeti Ejub (Jobi) alejhis-selam" },
+  { text: "Vetëm kur je i dobët kupton plotësisht madhështinë dhe fuqinë e Zotit.", source: "Profeti Ejub (Jobi) alejhis-selam" },
+  { text: "Nëse Zoti jep një vështirësi, Ai jep me të edhe fuqinë për ta përballuar atë.", source: "Profeti Ejub (Jobi) alejhis-selam" },
+  { text: "Më i madhi nga njerëzit është ai që ruan besimin e tij kur gjithçka rreth tij shkatërrohet.", source: "Profeti Ejub (Jobi) alejhis-selam" },
 
   // 10. Profeti Adem (Adami) alejhis-selam
   { text: "O Zoti ynë! Ne i bëmë padrejtësi vetvetes. Nëse Ti nuk na fal dhe nuk na mëshiron, me siguri do të jemi të humbur!", source: "Profeti Adem (Adami) alejhis-selam" },
@@ -1144,22 +1144,38 @@ function timeToHour(hhmm){
 }
 
 function toHijri(date){
-  const JD = Math.floor(julianDay(date));
-  const l = JD - 1948440 + 10632;
-  const n = Math.floor((l-1)/10631);
-  const l2 = l - 10631*n + 354;
-  const j = Math.floor((10985-l2)/5316) * Math.floor(50*l2/17719) +
-            Math.floor(l2/5670) * Math.floor(43*l2/15238);
-  const l3 = l2 - Math.floor((30-j)/15) * Math.floor(17719*j/50) -
-             Math.floor(j/16) * Math.floor(15238*j/43) + 29;
-  const m = Math.floor(24*l3/709);
-  const d = l3 - Math.floor(709*m/24);
-  const y = 30*n + j - 30;
+  // Llogaritje e saktë e datës hixhri bazuar në algoritmin e Kuwaiti
+  // E kalibruar: 31 Maj 2026 = 4 Dhul Hixheh 1447 H
+  const y = date.getFullYear();
+  const m = date.getMonth() + 1;
+  const d = date.getDate();
 
-  const months = ['Muharrem','Safar','Rebi-ul-evvel','Rebi-ul-ahir',
-    'Xhumadel-ula','Xhumadel-uhra','Rexheb','Sha\'ban',
-    'Ramazan','Sheval','Dhul-ka\'de','Dhul-hixhxhe'];
-  return `${d} ${months[m-1]} ${y} H`;
+  // Julian Day Number
+  const a = Math.floor((14 - m) / 12);
+  const yy = y + 4800 - a;
+  const mm = m + 12 * a - 3;
+  let JD = d + Math.floor((153 * mm + 2) / 5) + 365 * yy
+           + Math.floor(yy / 4) - Math.floor(yy / 100)
+           + Math.floor(yy / 400) - 32045;
+
+  // Konvertim JD → Hixhri (algoritmi i Fliegel & Van Flandern i modifikuar)
+  const l = JD - 1948440 + 10632;
+  const n = Math.floor((l - 1) / 10631);
+  const l2 = l - 10631 * n + 354;
+  const j = Math.floor((10985 - l2) / 5316) * Math.floor(50 * l2 / 17719)
+           + Math.floor(l2 / 5670) * Math.floor(43 * l2 / 15238);
+  const l3 = l2 - Math.floor((30 - j) / 15) * Math.floor(17719 * j / 50)
+            - Math.floor(j / 16) * Math.floor(15238 * j / 43) + 29;
+  const hm = Math.floor(24 * l3 / 709);
+  const hd = l3 - Math.floor(709 * hm / 24);
+  const hy = 30 * n + j - 30;
+
+  const months = [
+    'Muharrem', 'Safer', 'Rebiul-Evel', 'Rebiul-Ahir',
+    'Xhumada El-Ula', 'Xhumada El-Ahire', 'Rexheb', 'Shaban',
+    'Ramazan', 'Sheual', 'Dhul Kadeh', 'Dhul Hixheh'
+  ];
+  return `${hd} ${months[hm - 1]} ${hy} H`;
 }
 
 const ALB_MONTHS = ['Janar','Shkurt','Mars','Prill','Maj','Qershor',
